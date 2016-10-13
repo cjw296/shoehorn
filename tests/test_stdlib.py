@@ -1,10 +1,12 @@
-from logging import WARNING
+from logging import WARNING, StreamHandler, getLogger
 from unittest import TestCase
 
-from testfixtures import LogCapture, compare
+from testfixtures import LogCapture, OutputCapture, compare
 
+from shoehorn import get_logger
 from shoehorn.event import Event
-from shoehorn.stdlib import StandardLibraryTarget
+from shoehorn.stdlib import StandardLibraryTarget, ShoehornFormatter
+
 
 
 class TestStandardLibraryTarget(TestCase):
@@ -86,3 +88,38 @@ class TestStandardLibraryTarget(TestCase):
         )
         compare('Stack (most recent call last):',
                 actual=self.capture.records[-1].stack_info.split('\n')[0])
+
+
+class TestShoehornFormatter(TestCase):
+
+    def setUp(self):
+        # so we don't leave a mess
+        self.capture = LogCapture()
+        self.addCleanup(self.capture.uninstall)
+
+    def test_no_context(self):
+        with OutputCapture() as output:
+            handler = StreamHandler()
+        handler.setFormatter(ShoehornFormatter())
+        logger = getLogger()
+        logger.addHandler(handler)
+        try:
+            1/0
+        except:
+            logger.info('foo %s', 'bar', exc_info=True, stack_info=True)
+        compare(output.captured.splitlines()[0],
+                expected='foo bar ')
+
+    def test_extra_context(self):
+        with OutputCapture() as output:
+            handler = StreamHandler()
+        handler.setFormatter(ShoehornFormatter())
+        logger = getLogger()
+        logger.addHandler(handler)
+        try:
+            1/0
+        except:
+            get_logger().info('foo %s', 'bar', exc_info=True, stack_info=True,
+                              context='oh hai', other=1)
+        compare(output.captured.splitlines()[0],
+                expected="foo bar context='oh hai' other=1")
