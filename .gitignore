@@ -4,3 +4,5 @@
 /lib
 .coverage*
 _build/
+/build
+/dist
