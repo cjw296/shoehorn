@@ -4,6 +4,7 @@ from unittest import TestCase
 from testfixtures import LogCapture, OutputCapture, compare
 
 from shoehorn import get_logger
+from shoehorn.compat import PY2
 from shoehorn.event import Event
 from shoehorn.stdlib import StandardLibraryTarget, ShoehornFormatter
 
@@ -81,6 +82,8 @@ class TestStandardLibraryTarget(TestCase):
         compare(bad, actual=self.capture.records[-1].exc_info[1])
 
     def test_stack_info(self):
+        if PY2:
+            return
         event = Event(message='foo', stack_info=True)
         self.target(event)
         self.capture.check(
@@ -103,10 +106,13 @@ class TestShoehornFormatter(TestCase):
         handler.setFormatter(ShoehornFormatter())
         logger = getLogger()
         logger.addHandler(handler)
+        kw = dict(exc_info=True)
+        if not PY2:
+            kw['stack_info']=True
         try:
             1/0
         except:
-            logger.info('foo %s', 'bar', exc_info=True, stack_info=True)
+            logger.info('foo %s', 'bar', **kw)
         compare(output.captured.splitlines()[0],
                 expected='foo bar ')
 
@@ -116,10 +122,12 @@ class TestShoehornFormatter(TestCase):
         handler.setFormatter(ShoehornFormatter())
         logger = getLogger()
         logger.addHandler(handler)
+        kw = dict(exc_info=True, context='oh hai', other=1)
+        if not PY2:
+            kw['stack_info']=True
         try:
             1/0
         except:
-            get_logger().info('foo %s', 'bar', exc_info=True, stack_info=True,
-                              context='oh hai', other=1)
+            get_logger().info('foo %s', 'bar', **kw)
         compare(output.captured.splitlines()[0],
                 expected="foo bar context='oh hai' other=1")

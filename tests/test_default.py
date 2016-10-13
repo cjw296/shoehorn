@@ -3,6 +3,7 @@ from unittest import TestCase
 from testfixtures import LogCapture, compare
 
 from shoehorn import get_logger
+from shoehorn.compat import PY2
 from shoehorn.event import Event
 
 logger = get_logger()
@@ -58,6 +59,8 @@ class TestStandardLibraryTarget(TestCase):
         compare(bad, actual=self.capture.records[-1].exc_info[1])
 
     def test_stack_info(self):
+        if PY2:
+            return
         logger.info('foo', stack_info=True)
         self.capture.check(
             ('root', 'INFO', 'foo',

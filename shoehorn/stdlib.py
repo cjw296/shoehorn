@@ -1,4 +1,4 @@
-from logging import getLogger, INFO, _nameToLevel, Formatter
+from logging import getLogger, INFO, Formatter
 
 sentinel = object()
 
@@ -9,7 +9,12 @@ class StandardLibraryTarget(object):
         self.default_level=default_level
         self.loggers = {}
         # do this late in case something adds more levels
-        self.levels = {n.lower(): l for (n, l) in _nameToLevel.items()}
+        try:
+            from logging import _nameToLevel
+        except ImportError:
+            from logging import _levelNames as _nameToLevel
+        self.levels = {n.lower(): l for (n, l) in _nameToLevel.items()
+                       if isinstance(n, str)}
 
     def __call__(self, event):
 
