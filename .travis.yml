@@ -21,7 +21,7 @@ deploy:
   provider: pypi
   user: chrisw
   password:
-    secure:
+    secure: O+eVAuhz/J4hKY9gFDJVqo5WlEnPn3ziucpAi0rtfUpu2J9QdQpm3OmFDH1ijrJaxQcsZFxKrvo3R/Unwm5W0vkHGtvPWFtjzJJbRK9FVrR3qsKx2wpTeKC4Zemy0V3svdv4v1aPaWiXhvy9WAixk3lzjR8xt11TA7q24JdbWlsxcmCL7DDhBQaqYaHogkfafa/v2ZKAUFGHZ0F5tjaIidKe6ls/UvbZ9Tzyr1/Ci0GRH3U36DickgRa/Ryk7R/lg09P6NR19wcKtYreXnAXiVqOC0QYSyHSLWs40aM4r7+S5XwOjdJ1r4Agmu1AiUbOG7d6p6MSYMbdq6eL4vceob4YO65pbAnJ2DEgi6FECdXT/8OwY64e20G817nojuD45ib6xxVCS9j8oAmjP1H4YC79vDXTbk+bor0q3kXI8YLt1+slSziLNvm0VcBiYZ+LPvXhZ06Tr2nRuuWfF2dbPOVMrAo7VVGsplriFrltDjS6JikWvxyzhqB/95E5VhdmBz2Auv9LHxqqKs9kbwpxgoiJecpBCO9JOp3+yrwEUMeJO2TMhBu1Ig/K6KF6JdsfPCKRCNPoLDFawKMzGPcbI6MJn0tUvJe0z4L7sYICxx9z2F+Uv7TZe3Un5Qq9YYyyCEuxC9gDJcJn63zMlk7jpZpTyIWRyE35/tykshpC6EI=
   on:
     tags: true
     repo: cjw296/shoehorn
