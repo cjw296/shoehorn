@@ -11,6 +11,7 @@ class Logger(object):
 
     def bind(self, **context):
         logger = self.__class__(self.target)
+        logger.context.update(self.context)
         logger.context.update(context)
         return logger
 

@@ -117,6 +117,16 @@ class TestLogger(TestCase):
             Event(level='debug', message='bar'),
         )
 
+    def test_nested_bind(self):
+        log = self.logger.bind(keep=1, replace=2)
+        log.info(event='first bind')
+        log = log.bind(replace=3, new=4)
+        log.info(event='second bind')
+        self.check(
+            Event(level='info', event='first bind', keep=1, replace=2),
+            Event(level='info', event='second bind', keep=1, replace=3, new=4),
+        )
+
     def test_alter(self):
         self.logger.info('foo')
         self.logger.alter(name='my.logger')
