@@ -99,29 +99,25 @@ class TestShoehornFormatter(TestCase):
         # so we don't leave a mess
         self.capture = LogCapture()
         self.addCleanup(self.capture.uninstall)
+        with OutputCapture() as output:
+            self.handler = StreamHandler()
+        self.output = output
+        self.handler.setFormatter(ShoehornFormatter())
+        self.logger = getLogger()
+        self.logger.addHandler(self.handler)
 
     def test_no_context(self):
-        with OutputCapture() as output:
-            handler = StreamHandler()
-        handler.setFormatter(ShoehornFormatter())
-        logger = getLogger()
-        logger.addHandler(handler)
         kw = dict(exc_info=True)
         if not PY2:
             kw['stack_info']=True
         try:
             1/0
         except:
-            logger.info('foo %s', 'bar', **kw)
-        compare(output.captured.splitlines()[0],
+            self.logger.info('foo %s', 'bar', **kw)
+        compare(self.output.captured.splitlines()[0],
                 expected='foo bar ')
 
     def test_extra_context(self):
-        with OutputCapture() as output:
-            handler = StreamHandler()
-        handler.setFormatter(ShoehornFormatter())
-        logger = getLogger()
-        logger.addHandler(handler)
         kw = dict(exc_info=True, context='oh hai', other=1)
         if not PY2:
             kw['stack_info']=True
@@ -129,5 +125,13 @@ class TestShoehornFormatter(TestCase):
             1/0
         except:
             get_logger().info('foo %s', 'bar', **kw)
-        compare(output.captured.splitlines()[0],
+        compare(self.output.captured.splitlines()[0],
                 expected="foo bar context='oh hai' other=1")
+
+    def test_bound_logger(self):
+        self.handler.setFormatter(ShoehornFormatter(
+            '%(name)s %(message)s%(shoehorn_context)s'
+        ))
+        get_logger('foo.bar').info('oh hai')
+        compare(self.output.captured,
+                expected="foo.bar oh hai\n")

@@ -45,7 +45,7 @@ class StandardLibraryTarget(object):
 
 class ShoehornFormatter(Formatter):
 
-    exclude_keys = {'args', 'exc_info', 'level', 'message', 'stack_info'}
+    exclude_keys = {'args', 'exc_info', 'level', 'message', 'stack_info', 'logger'}
 
     def __init__(self, fmt='%(message)s %(shoehorn_context)s', *args, **kw):
         super(ShoehornFormatter, self).__init__(fmt, *args, **kw)
