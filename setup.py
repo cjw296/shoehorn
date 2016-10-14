@@ -9,7 +9,7 @@ base_dir = os.path.dirname(__file__)
 
 setup(
     name='shoehorn',
-    version='0.1.3',
+    version='0.1.4',
     author='Chris Withers',
     author_email='chris@withers.org',
     license='MIT',
