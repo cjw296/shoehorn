@@ -56,8 +56,7 @@ class ShoehornFormatter(Formatter):
             if event is None:
                 record.shoehorn_context = ''
             else:
-                record.shoehorn_context = ' '.join(
-                    str(k)+'='+repr(v) for (k, v) in sorted(event.items())
-                    if k not in self.exclude_keys
+                record.shoehorn_context = event.serialize(
+                    join=' '.join, exclude_keys = self.exclude_keys
                 )
         return super(ShoehornFormatter, self).format(record)
