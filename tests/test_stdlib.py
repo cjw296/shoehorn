@@ -135,3 +135,18 @@ class TestShoehornFormatter(TestCase):
         get_logger('foo.bar').info('oh hai')
         compare(self.output.captured,
                 expected="foo.bar oh hai\n")
+
+    def test_multiline_value(self):
+        try:
+            1/0
+        except:
+            get_logger().exception('bad', diff='foo\nbar')
+
+        compare(self.output.captured.splitlines()[:5],
+                expected=[
+                    'bad ',
+                    'diff:',
+                    'foo',
+                    'bar',
+                    'Traceback (most recent call last):',
+                ])

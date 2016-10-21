@@ -51,12 +51,25 @@ class ShoehornFormatter(Formatter):
         super(ShoehornFormatter, self).__init__(fmt, *args, **kw)
 
     def format(self, record):
+        post = []
         if getattr(record, 'shoehorn_context', None) is None:
             event = getattr(record, 'shoehorn_event', None)
             if event is None:
                 record.shoehorn_context = ''
             else:
+                exclude = self.exclude_keys.copy()
+                for k, v in sorted(event.items()):
+                    if isinstance(v, str) and '\n' in v:
+                        post.append('\n'+k+':\n'+v)
+                        exclude.add(k)
+
                 record.shoehorn_context = event.serialize(
-                    join=' '.join, exclude_keys = self.exclude_keys
+                    join=' '.join, exclude_keys=exclude
                 )
-        return super(ShoehornFormatter, self).format(record)
+        serialised = super(ShoehornFormatter, self).format(record)
+        if record.exc_text is not None:
+            serialised, tail = serialised.split('\n', 1)
+            post.append('\n'+tail)
+
+        return serialised + ''.join(post)
+
