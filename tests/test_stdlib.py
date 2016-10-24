@@ -1,4 +1,5 @@
-from logging import WARNING, StreamHandler, getLogger
+from logging import WARNING, StreamHandler, getLogger, FileHandler
+from tempfile import NamedTemporaryFile
 from unittest import TestCase
 
 from testfixtures import LogCapture, OutputCapture, compare
@@ -136,7 +137,7 @@ class TestShoehornFormatter(TestCase):
         compare(self.output.captured,
                 expected="foo.bar oh hai\n")
 
-    def test_multiline_value(self):
+    def test_multiline_value_string(self):
         try:
             1/0
         except:
@@ -150,3 +151,36 @@ class TestShoehornFormatter(TestCase):
                     'bar',
                     'Traceback (most recent call last):',
                 ])
+
+    def test_multiline_value_unicode_to_file(self):
+        disk_file = NamedTemporaryFile(mode='ab+')
+        handler = FileHandler(disk_file.name)
+        handler.setFormatter(ShoehornFormatter())
+        self.logger.addHandler(handler)
+        try:
+            1/0
+        except:
+            get_logger().exception('bad', short='x', diff=u'foo\n\U0001F4A9')
+
+        disk_file.seek(0)
+        compare(disk_file.readlines()[:5],
+                expected=[
+                    b"bad short='x'\n",
+                    b'diff:\n',
+                    b'foo\n',
+                    b'\xf0\x9f\x92\xa9\n',
+                    b'Traceback (most recent call last):\n',
+                ])
+
+    if not PY2:
+        def test_multiline_value_bytes(self):
+            try:
+                1/0
+            except:
+                get_logger().exception('bad', diff=b'foo\nbar')
+
+            compare(self.output.captured.splitlines()[:2],
+                    expected=[
+                        "bad diff=b'foo\\nbar'",
+                        'Traceback (most recent call last):',
+                    ])
