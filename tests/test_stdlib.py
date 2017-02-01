@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from logging import WARNING, StreamHandler, getLogger, FileHandler
 from tempfile import NamedTemporaryFile
 from unittest import TestCase
@@ -5,7 +6,7 @@ from unittest import TestCase
 from testfixtures import LogCapture, OutputCapture, compare
 
 from shoehorn import get_logger
-from shoehorn.compat import PY2
+from shoehorn.compat import PY2, PY36
 from shoehorn.event import Event
 from shoehorn.stdlib import StandardLibraryTarget, ShoehornFormatter
 
@@ -119,13 +120,21 @@ class TestShoehornFormatter(TestCase):
                 expected='foo bar ')
 
     def test_extra_context(self):
-        kw = dict(exc_info=True, context='oh hai', other=1)
+        kw = OrderedDict([('exc_info', True),
+                          ('context', 'oh hai'),
+                          ('other', 1)])
         if not PY2:
             kw['stack_info']=True
-        try:
-            1/0
-        except:
-            get_logger().info('foo %s', 'bar', **kw)
+            try:
+                1/0
+            except:
+                logger = get_logger()
+                if PY36:
+                    logger.info('foo %s', 'bar', **kw)
+                else:
+                    logger.log_ordered('info',
+                                       ('message', 'foo bar'), *kw.items())
+
         compare(self.output.captured.splitlines()[0],
                 expected="foo bar context='oh hai' other=1")
 
