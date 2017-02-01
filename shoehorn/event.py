@@ -1,4 +1,7 @@
-class Event(dict):
+from collections import OrderedDict
+
+
+class Event(OrderedDict):
 
     def serialize(self, kw='=', join=', '.join, quote=repr,
                   exclude_keys=frozenset()):

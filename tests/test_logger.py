@@ -3,6 +3,7 @@ from unittest import TestCase
 from testfixtures import compare, ShouldRaise
 
 from shoehorn import Logger
+from shoehorn.compat import PY36
 from shoehorn.event import Event
 
 
@@ -14,6 +15,10 @@ class TestLogger(TestCase):
 
     def check(self, *expected):
         compare(expected, actual=self.records)
+
+    def check_ordered(self, *expected):
+        compare(expected,
+                actual=[tuple(r.items()) for r in self.records])
 
     def test_minimal(self):
         self.logger.debug(event='foo')
@@ -134,4 +139,33 @@ class TestLogger(TestCase):
         self.check(
             Event(level='info', message='foo'),
             Event(name='my.logger', level='info', message='bar'),
+        )
+
+    if PY36:
+        def test_bind_implicit_ordered(self):
+            log = self.logger.bind(before=1, after=2)
+            log.info('oh hai')
+            self.check_ordered(
+                (('before', 1), ('after', 2),
+                 ('level', 'info'), ('message', 'oh hai'))
+            )
+
+        def test_log_implicit_ordered(self):
+            self.logger.info(before=1, after=2)
+            self.check_ordered(
+                (('before', 1), ('after', 2), ('level', 'info'))
+            )
+
+    def test_bind_ordered(self):
+        log = self.logger.bind_ordered(('before', 1), ('after', 2))
+        log.info('oh hai')
+        self.check_ordered(
+            (('before', 1), ('after', 2),
+             ('level', 'info'), ('message', 'oh hai'))
+        )
+
+    def test_log_ordered(self):
+        self.logger.log_ordered('info', ('before', 1), ('after', 2))
+        self.check_ordered(
+            (('before', 1), ('after', 2), ('level', 'info'))
         )

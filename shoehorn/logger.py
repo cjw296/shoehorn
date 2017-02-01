@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from .event import Event
 
 
@@ -5,11 +7,19 @@ class Logger(object):
 
     def __init__(self, target):
         self.target = target
-        self.context = {}
+        self.context = OrderedDict()
 
     # context methods
 
     def bind(self, **context):
+        return self.bind_ordered(*context.items())
+
+    def bind_ordered(self, *context):
+        """
+        :param context:
+          A sequence of ``(name, value)`` tuples providing context to bind
+          to this logger. The order of these tuples will be preserved.
+        """
         logger = self.__class__(self.target)
         logger.context.update(self.context)
         logger.context.update(context)
@@ -56,3 +66,14 @@ class Logger(object):
 
     def log(self, level, *args, **context):
         self._log(level, args, context)
+
+    def log_ordered(self, level, *context):
+        """
+        :param level:
+          A string giving the level at which this :class:`Event` should be
+          logged.
+        :param context:
+          A sequence of ``(name, value)`` tuples providing the context to log.
+          The order of these tuples will be preserved.
+        """
+        self._log(level, (), OrderedDict(context))
