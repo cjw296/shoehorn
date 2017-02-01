@@ -20,7 +20,7 @@ class TestStandardLibraryTarget(TestCase):
     def test_minimal(self):
         logger.info(event='test')
         self.capture.check(
-            ('root', 'INFO', 'None',
+            ('root', 'INFO', '',
              Event(event='test', level='info'))
         )
 
@@ -28,14 +28,14 @@ class TestStandardLibraryTarget(TestCase):
         logger = get_logger('foo')
         logger.info(event='test')
         self.capture.check(
-            ('foo', 'INFO', 'None',
+            ('foo', 'INFO', '',
              Event(event='test', logger='foo', level='info'))
         )
 
     def test_level(self):
         logger.warning(event='test')
         self.capture.check(
-            ('root', 'WARNING', 'None',
+            ('root', 'WARNING', '',
              Event(event='test', level='warning'))
         )
 

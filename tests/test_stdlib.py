@@ -25,7 +25,7 @@ class TestStandardLibraryTarget(TestCase):
         event = Event(event='test')
         self.target(event)
         self.capture.check(
-            ('root', 'INFO', 'None', event)
+            ('root', 'INFO', '', event)
         )
 
     def test_specifify_default_level(self):
@@ -33,35 +33,35 @@ class TestStandardLibraryTarget(TestCase):
         event = Event(event='test')
         target(event)
         self.capture.check(
-            ('root', 'WARNING', 'None', event)
+            ('root', 'WARNING', '', event)
         )
 
     def test_named_logger(self):
         event = Event(event='test', logger='foo')
         self.target(event)
         self.capture.check(
-            ('foo', 'INFO', 'None', event)
+            ('foo', 'INFO', '', event)
         )
 
     def test_numeric_level(self):
         event = Event(event='test', level=WARNING)
         self.target(event)
         self.capture.check(
-            ('root', 'WARNING', 'None', event)
+            ('root', 'WARNING', '', event)
         )
 
     def test_string_level(self):
         event = Event(event='test', level='warning')
         self.target(event)
         self.capture.check(
-            ('root', 'WARNING', 'None', event)
+            ('root', 'WARNING', '', event)
         )
 
     def test_unknown_string_level(self):
         event = Event(event='test', level='yuhwut?')
         self.target(event)
         self.capture.check(
-            ('root', 'INFO', 'None', event)
+            ('root', 'INFO', '', event)
         )
 
     def test_sub_args(self):
@@ -193,3 +193,8 @@ class TestShoehornFormatter(TestCase):
                         "bad diff=b'foo\\nbar'",
                         'Traceback (most recent call last):',
                     ])
+
+    def test_no_message(self):
+        get_logger().info(bar='foo')
+        compare(self.output.captured.splitlines()[0],
+                expected=" bar='foo'")

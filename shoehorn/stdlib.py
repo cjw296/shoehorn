@@ -39,7 +39,7 @@ class StandardLibraryTarget(object):
 
         logger.log(
             level,
-            event.get('message'),
+            event.get('message', ''),
             *event.get('args', ()),
             **kwargs
         )
