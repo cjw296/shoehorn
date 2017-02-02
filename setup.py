@@ -9,13 +9,13 @@ base_dir = os.path.dirname(__file__)
 
 setup(
     name='shoehorn',
-    version='0.1.7',
+    version='0.2.0',
     author='Chris Withers',
     author_email='chris@withers.org',
     license='MIT',
     description="Shoehorn structured logs into or out of standard library logging",
     # long_description=open('docs/description.rst').read(),
-    # url='https://github.com/cjw296/chide',
+    url='https://github.com/cjw296/shoehorn',
     classifiers=[
         # 'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
