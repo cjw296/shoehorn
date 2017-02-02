@@ -125,15 +125,15 @@ class TestShoehornFormatter(TestCase):
                           ('other', 1)])
         if not PY2:
             kw['stack_info']=True
-            try:
-                1/0
-            except:
-                logger = get_logger()
-                if PY36:
-                    logger.info('foo %s', 'bar', **kw)
-                else:
-                    logger.log_ordered('info',
-                                       ('message', 'foo bar'), *kw.items())
+        try:
+            1/0
+        except:
+            logger = get_logger()
+            if PY36:
+                logger.info('foo %s', 'bar', **kw)
+            else:
+                logger.log_ordered('info',
+                                   ('message', 'foo bar'), *kw.items())
 
         compare(self.output.captured.splitlines()[0],
                 expected="foo bar context='oh hai' other=1")
