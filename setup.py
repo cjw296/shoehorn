@@ -1,5 +1,5 @@
 # See license.txt for license details.
-# Copyright (c) 2016 Chris Withers
+# Copyright (c) 2016-2017 Chris Withers
 
 import os
 
@@ -9,7 +9,7 @@ base_dir = os.path.dirname(__file__)
 
 setup(
     name='shoehorn',
-    version='0.2.0',
+    version='0.2.1',
     author='Chris Withers',
     author_email='chris@withers.org',
     license='MIT',
