@@ -61,7 +61,7 @@ class ShoehornFormatter(Formatter):
                 post = []
                 exclude = self.exclude_keys.copy()
                 for k, v in sorted(event.items()):
-                    if isinstance(v, text_types) and '\n' in v:
+                    if k not in exclude and isinstance(v, text_types) and '\n' in v:
                         post.append('\n'+k+':\n'+v)
                         exclude.add(k)
 

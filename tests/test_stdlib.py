@@ -161,6 +161,12 @@ class TestShoehornFormatter(TestCase):
                     'Traceback (most recent call last):',
                 ])
 
+    def test_multiline_message_interpolation(self):
+        log = get_logger().bind(k='v')
+        log.info('oh\n%s\nryl', 'ffs')
+        compare(self.output.captured,
+                expected="oh\nffs\nryl k='v'\n")
+
     def test_multiline_value_unicode_to_file(self):
         disk_file = NamedTemporaryFile(mode='ab+')
         handler = FileHandler(disk_file.name)
