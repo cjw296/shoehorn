@@ -11,7 +11,6 @@ from shoehorn.event import Event
 from shoehorn.stdlib import StandardLibraryTarget, ShoehornFormatter
 
 
-
 class TestStandardLibraryTarget(TestCase):
 
     def setUp(self):
@@ -117,7 +116,7 @@ class TestShoehornFormatter(TestCase):
         except:
             self.logger.info('foo %s', 'bar', **kw)
         compare(self.output.captured.splitlines()[0],
-                expected='foo bar ')
+                expected='foo bar')
 
     def test_extra_context(self):
         kw = OrderedDict([('exc_info', True),
@@ -154,7 +153,7 @@ class TestShoehornFormatter(TestCase):
 
         compare(self.output.captured.splitlines()[:5],
                 expected=[
-                    'bad ',
+                    'bad',
                     'diff:',
                     'foo',
                     'bar',
@@ -204,3 +203,8 @@ class TestShoehornFormatter(TestCase):
         get_logger().info(bar='foo')
         compare(self.output.captured.splitlines()[0],
                 expected=" bar='foo'")
+
+    def test_unbound(self):
+        get_logger().info('the message')
+        compare(self.output.captured.splitlines(),
+                expected=["the message"])
