@@ -49,7 +49,7 @@ class ShoehornFormatter(Formatter):
 
     exclude_keys = {'args', 'exc_info', 'level', 'message', 'stack_info', 'logger'}
 
-    def __init__(self, fmt='%(message)s %(shoehorn_context)s', *args, **kw):
+    def __init__(self, fmt='%(message)s%(shoehorn_context)s', *args, **kw):
         super(ShoehornFormatter, self).__init__(fmt, *args, **kw)
 
     def format(self, record):
@@ -69,6 +69,9 @@ class ShoehornFormatter(Formatter):
                     join=' '.join, exclude_keys=exclude
                 )
                 record.shoehorn_post = ''.join(post)
+
+        if record.shoehorn_context:
+            record.shoehorn_context = ' ' + record.shoehorn_context.lstrip()
 
         serialised = super(ShoehornFormatter, self).format(record)
 
