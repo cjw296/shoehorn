@@ -16,6 +16,12 @@ class Logger(object):
 
     def bind_ordered(self, *context):
         """
+
+        .. note::
+
+          This is an API wart required to support Python 2. It will go
+          away when Python 2 does, so please only use it if you have to!
+
         :param context:
           A sequence of ``(name, value)`` tuples providing context to bind
           to this logger. The order of these tuples will be preserved.
@@ -69,6 +75,12 @@ class Logger(object):
 
     def log_ordered(self, level, *context):
         """
+
+        .. note::
+
+          This is an API wart required to support Python 2. It will go
+          away when Python 2 does, so please only use it if you have to!
+
         :param level:
           A string giving the level at which this :class:`Event` should be
           logged.
