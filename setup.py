@@ -1,5 +1,5 @@
-# See license.txt for license details.
-# Copyright (c) 2016-2017 Chris Withers
+# See LICENSE.txt for license details.
+# Copyright (c) 2016-2018 Chris Withers
 
 import os
 
