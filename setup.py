@@ -33,9 +33,7 @@ setup(
         test=[
             'coveralls',
             'manuel',
-            'nose',
-            'nose-cov',
-            'nose-fixes',
+            'pytest',
             'testfixtures',
             ],
         build=['sphinx', 'pkginfo', 'setuptools-git', 'twine', 'wheel']
