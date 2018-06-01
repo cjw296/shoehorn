@@ -1,3 +1,5 @@
+from itertools import chain
+
 from .event import Event
 
 
@@ -20,7 +22,7 @@ class Stack(object):
         self.error_target_installed = []
 
     def push(self, *targets):
-        self.targets.extend(targets)
+        self.targets[:] = chain(targets, self.targets)
         if self.error_target is not None:
             for target in targets:
                 if getattr(target, 'error_target', MARKER) is None:

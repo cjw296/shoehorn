@@ -35,6 +35,16 @@ class TestStack(object):
         compare(t1.events, expected=['event'])
         compare(t2.events, expected=[])
 
+    def test_targets_ordering(self):
+        t1 = TestTarget()
+        t2 = TestTarget(propagate=False)
+        s = Stack()
+        s.push(t1)
+        s.push(t2)
+        s('event')
+        compare(t1.events, expected=[])
+        compare(t2.events, expected=['event'])
+
     def test_replace_event(self):
         def handle(event):
             return 'something else'
