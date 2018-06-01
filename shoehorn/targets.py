@@ -17,6 +17,7 @@ class Stack(object):
     def __init__(self, error_target=None):
         self.targets = []
         self.error_target = error_target
+        self.error_target_installed = []
 
     def push(self, *targets):
         self.targets.extend(targets)
@@ -24,6 +25,14 @@ class Stack(object):
             for target in targets:
                 if getattr(target, 'error_target', MARKER) is None:
                     target.error_target = self.error_target
+                    self.error_target_installed.append(target)
+
+    def pop(self):
+        target = self.targets.pop()
+        if target in self.error_target_installed:
+            target.error_target = None
+            self.error_target_installed.remove(target)
+        return target
 
     def __call__(self, event):
         try:

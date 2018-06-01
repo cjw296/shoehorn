@@ -80,6 +80,38 @@ class TestStack(object):
         s.push(t)
         assert t.error_target == 'bar'
 
+    def test_pop(self):
+        s = Stack()
+        target1 = object()
+        target2 = object()
+        s.push(target1, target2)
+        assert s.targets == [target1, target2]
+        returned = s.pop()
+        assert returned is target2
+        returned = s.pop()
+        assert returned is target1
+        assert s.targets == []
+
+    def test_pop_error_target(self):
+        error_target = object()
+        s = Stack(error_target=error_target)
+        target = TestTarget()
+        s.push(target)
+        assert target.error_target == error_target
+        s.pop()
+        assert target.error_target is None
+
+    def test_other_error_target(self):
+        error_target1 = object()
+        error_target2 = object()
+        s = Stack(error_target=error_target1)
+        target = TestTarget()
+        target.error_target = error_target2
+        s.push(target)
+        assert target.error_target == error_target2
+        s.pop()
+        assert target.error_target == error_target2
+
 
 class TestLayer(object):
 
