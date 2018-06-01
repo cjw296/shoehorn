@@ -3,8 +3,8 @@ class Stack(object):
     def __init__(self):
         self.targets = []
 
-    def push(self, *handlers):
-        self.targets.extend(handlers)
+    def push(self, *targets):
+        self.targets.extend(targets)
 
     def __call__(self, event):
         for target in self.targets:
@@ -15,13 +15,13 @@ class Stack(object):
 
 class Layer(object):
 
-    def __init__(self, *handlers, propagate=False):
+    def __init__(self, *targets, propagate=False):
         self.targets = []
-        self.targets.extend(handlers)
+        self.targets.extend(targets)
         self.propagate = propagate
 
-    def add(self, handler):
-        self.targets.append(handler)
+    def add(self, target):
+        self.targets.append(target)
 
     def __call__(self, event):
         for target in self.targets:
