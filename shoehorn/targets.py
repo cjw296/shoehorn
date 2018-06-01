@@ -37,7 +37,11 @@ class Stack(object):
 
 class Layer(object):
 
-    def __init__(self, *targets, propagate=False, error_target=None):
+    def __init__(self, *targets, **kw):
+        propagate = kw.pop('propagate', False)
+        error_target = kw.pop('error_target', None)
+        assert not kw, 'only propagate and error_target are keyword parameters'
+        
         self.targets = []
         self.targets.extend(targets)
         self.propagate = propagate
