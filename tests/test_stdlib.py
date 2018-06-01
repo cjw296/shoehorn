@@ -11,14 +11,17 @@ from shoehorn.event import Event
 from shoehorn.stdlib import StandardLibraryTarget, ShoehornFormatter
 
 
+@pytest.fixture(autouse=True)
+def capture():
+    # also sets level and makes sure we leave no handlers around:
+    with LogCapture(
+        attributes=('name', 'levelname', 'getMessage', 'shoehorn_event')
+    ) as log:
+        yield log
+
+
 class TestStandardLibraryTarget(object):
 
-    @pytest.fixture(autouse=True)
-    def capture(self):
-        with LogCapture(
-            attributes=('name', 'levelname', 'getMessage', 'shoehorn_event')
-        ) as log:
-            yield log
 
     @pytest.fixture()
     def target(self):
@@ -115,10 +118,8 @@ class TestShoehornFormatter(object):
     @pytest.fixture(autouse=True)
     def logger(self, handler):
         logger = getLogger()
-        # sets level and makes sure we leave no handlers around:
-        with LogCapture():
-            logger.addHandler(handler)
-            yield logger
+        logger.addHandler(handler)
+        return logger
 
     def test_no_context(self, logger, output):
         kw = dict(exc_info=True)
