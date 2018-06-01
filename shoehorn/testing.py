@@ -1,5 +1,10 @@
 class TestTarget(object):
 
+    #: .. note:: This isn't used during handling of events,
+    #            it's only here for testing setting and un-setting
+    #            error handlers.
+    error_target = None
+
     def __init__(self, propagate=False):
         self.events = []
         self.propagate = propagate
