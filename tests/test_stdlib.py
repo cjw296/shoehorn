@@ -1,9 +1,9 @@
 from collections import OrderedDict
 from logging import WARNING, StreamHandler, getLogger, FileHandler
 from tempfile import NamedTemporaryFile
-from unittest import TestCase
 
 from testfixtures import LogCapture, OutputCapture, compare
+import pytest
 
 from shoehorn import get_logger
 from shoehorn.compat import PY2, PY36
@@ -11,114 +11,127 @@ from shoehorn.event import Event
 from shoehorn.stdlib import StandardLibraryTarget, ShoehornFormatter
 
 
-class TestStandardLibraryTarget(TestCase):
+class TestStandardLibraryTarget(object):
 
-    def setUp(self):
-        self.capture = LogCapture(
+    @pytest.fixture(autouse=True)
+    def capture(self):
+        with LogCapture(
             attributes=('name', 'levelname', 'getMessage', 'shoehorn_event')
-        )
-        self.addCleanup(self.capture.uninstall)
-        self.target = StandardLibraryTarget()
+        ) as log:
+            yield log
 
-    def test_minimal(self):
+    @pytest.fixture()
+    def target(self):
+        return StandardLibraryTarget()
+
+    def test_minimal(self, target, capture):
         event = Event(event='test')
-        self.target(event)
-        self.capture.check(
+        target(event)
+        capture.check(
             ('root', 'INFO', '', event)
         )
 
-    def test_specifify_default_level(self):
+    def test_specifify_default_level(self, capture):
         target = StandardLibraryTarget(default_level=WARNING)
         event = Event(event='test')
         target(event)
-        self.capture.check(
+        capture.check(
             ('root', 'WARNING', '', event)
         )
 
-    def test_named_logger(self):
+    def test_named_logger(self, target, capture):
         event = Event(event='test', logger='foo')
-        self.target(event)
-        self.capture.check(
+        target(event)
+        capture.check(
             ('foo', 'INFO', '', event)
         )
 
-    def test_numeric_level(self):
+    def test_numeric_level(self, target, capture):
         event = Event(event='test', level=WARNING)
-        self.target(event)
-        self.capture.check(
+        target(event)
+        capture.check(
             ('root', 'WARNING', '', event)
         )
 
-    def test_string_level(self):
+    def test_string_level(self, target, capture):
         event = Event(event='test', level='warning')
-        self.target(event)
-        self.capture.check(
+        target(event)
+        capture.check(
             ('root', 'WARNING', '', event)
         )
 
-    def test_unknown_string_level(self):
+    def test_unknown_string_level(self, target, capture):
         event = Event(event='test', level='yuhwut?')
-        self.target(event)
-        self.capture.check(
+        target(event)
+        capture.check(
             ('root', 'INFO', '', event)
         )
 
-    def test_sub_args(self):
+    def test_sub_args(self, target, capture):
         event = Event(message='foo %s', args=('bar', ))
-        self.target(event)
-        self.capture.check(
+        target(event)
+        capture.check(
             ('root', 'INFO', 'foo bar', event)
         )
 
-    def test_exc_info(self):
+    def test_exc_info(self, target, capture):
         bad = Exception('bad')
         try:
             raise bad
         except:
             event = Event(level='error', message='foo', exc_info=True)
-            self.target(event)
-        self.capture.check(
+            target(event)
+        capture.check(
             ('root', 'ERROR', 'foo', event)
         )
-        compare(bad, actual=self.capture.records[-1].exc_info[1])
+        compare(bad, actual=capture.records[-1].exc_info[1])
 
-    def test_stack_info(self):
+    def test_stack_info(self, target, capture):
         if PY2:
             return
         event = Event(message='foo', stack_info=True)
-        self.target(event)
-        self.capture.check(
+        target(event)
+        capture.check(
             ('root', 'INFO', 'foo', event)
         )
         compare('Stack (most recent call last):',
-                actual=self.capture.records[-1].stack_info.split('\n')[0])
+                actual=capture.records[-1].stack_info.split('\n')[0])
 
 
-class TestShoehornFormatter(TestCase):
+class TestShoehornFormatter(object):
 
-    def setUp(self):
-        # so we don't leave a mess
-        self.capture = LogCapture()
-        self.addCleanup(self.capture.uninstall)
-        with OutputCapture() as output:
-            self.handler = StreamHandler()
-        self.output = output
-        self.handler.setFormatter(ShoehornFormatter())
-        self.logger = getLogger()
-        self.logger.addHandler(self.handler)
+    @pytest.fixture()
+    def output(self):
+        return OutputCapture()
 
-    def test_no_context(self):
+
+    @pytest.fixture()
+    def handler(self, output):
+        with output:
+            handler = StreamHandler()
+            handler.setFormatter(ShoehornFormatter())
+        return handler
+
+    @pytest.fixture(autouse=True)
+    def logger(self, handler):
+        logger = getLogger()
+        # sets level and makes sure we leave no handlers around:
+        with LogCapture():
+            logger.addHandler(handler)
+            yield logger
+
+    def test_no_context(self, logger, output):
         kw = dict(exc_info=True)
         if not PY2:
             kw['stack_info']=True
         try:
             1/0
         except:
-            self.logger.info('foo %s', 'bar', **kw)
-        compare(self.output.captured.splitlines()[0],
+            logger.info('foo %s', 'bar', **kw)
+        compare(output.captured.splitlines()[0],
                 expected='foo bar')
 
-    def test_extra_context(self):
+    def test_extra_context(self, output, logger):
         kw = OrderedDict([('exc_info', True),
                           ('context', 'oh hai'),
                           ('other', 1)])
@@ -134,24 +147,24 @@ class TestShoehornFormatter(TestCase):
                 logger.log_ordered('info',
                                    ('message', 'foo bar'), *kw.items())
 
-        compare(self.output.captured.splitlines()[0],
+        compare(output.captured.splitlines()[0],
                 expected="foo bar context='oh hai' other=1")
 
-    def test_bound_logger(self):
-        self.handler.setFormatter(ShoehornFormatter(
+    def test_bound_logger(self, handler, output):
+        handler.setFormatter(ShoehornFormatter(
             '%(name)s %(message)s%(shoehorn_context)s'
         ))
         get_logger('foo.bar').info('oh hai')
-        compare(self.output.captured,
+        compare(output.captured,
                 expected="foo.bar oh hai\n")
 
-    def test_multiline_value_string(self):
+    def test_multiline_value_string(self, output):
         try:
             1/0
         except:
             get_logger().exception('bad', diff='foo\nbar')
 
-        compare(self.output.captured.splitlines()[:5],
+        compare(output.captured.splitlines()[:5],
                 expected=[
                     'bad',
                     'diff:',
@@ -160,17 +173,17 @@ class TestShoehornFormatter(TestCase):
                     'Traceback (most recent call last):',
                 ])
 
-    def test_multiline_message_interpolation(self):
+    def test_multiline_message_interpolation(self, output):
         log = get_logger().bind(k='v')
         log.info('oh\n%s\nryl', 'ffs')
-        compare(self.output.captured,
+        compare(output.captured,
                 expected="oh\nffs\nryl k='v'\n")
 
-    def test_multiline_value_unicode_to_file(self):
+    def test_multiline_value_unicode_to_file(self, logger):
         disk_file = NamedTemporaryFile(mode='ab+')
         handler = FileHandler(disk_file.name)
         handler.setFormatter(ShoehornFormatter())
-        self.logger.addHandler(handler)
+        logger.addHandler(handler)
         try:
             1/0
         except:
@@ -187,24 +200,24 @@ class TestShoehornFormatter(TestCase):
                 ])
 
     if not PY2:
-        def test_multiline_value_bytes(self):
+        def test_multiline_value_bytes(self, output):
             try:
                 1/0
             except:
                 get_logger().exception('bad', diff=b'foo\nbar')
 
-            compare(self.output.captured.splitlines()[:2],
+            compare(output.captured.splitlines()[:2],
                     expected=[
                         "bad diff=b'foo\\nbar'",
                         'Traceback (most recent call last):',
                     ])
 
-    def test_no_message(self):
+    def test_no_message(self, output):
         get_logger().info(bar='foo')
-        compare(self.output.captured.splitlines()[0],
+        compare(output.captured.splitlines()[0],
                 expected=" bar='foo'")
 
-    def test_unbound(self):
+    def test_unbound(self, output):
         get_logger().info('the message')
-        compare(self.output.captured.splitlines(),
+        compare(output.captured.splitlines(),
                 expected=["the message"])
