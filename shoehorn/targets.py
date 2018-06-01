@@ -1,5 +1,7 @@
-from . import MARKER
 from .event import Event
+
+
+MARKER = object()
 
 
 def handle_error(target, exception, event):

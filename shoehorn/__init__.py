@@ -1,7 +1,6 @@
 from shoehorn.stdlib import StandardLibraryTarget
 from .logger import Logger
 
-MARKER = object()
 
 
 logger = Logger(StandardLibraryTarget())
