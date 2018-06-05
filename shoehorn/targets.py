@@ -30,7 +30,7 @@ class Stack(object):
                     self.error_target_installed.append(target)
 
     def pop(self):
-        target = self.targets.pop()
+        target = self.targets.pop(0)
         if target in self.error_target_installed:
             target.error_target = None
             self.error_target_installed.remove(target)
