@@ -15,3 +15,45 @@ class TestTarget(object):
         self.events.append(event)
         if self.propagate:
             return event
+
+
+class Capture(object):
+
+    def __init__(self, stack):
+        self._targets = []
+        self.events = []
+        self.stack = stack
+
+    @property
+    def targets(self):
+        # don't include our own test target
+        return self._targets[:-1]
+
+    def error_target(self, event):
+        raise event['exception']
+
+    def start(self):
+        # vars is just a view, so need to take a copy:
+        self.existing = dict(vars(self.stack))
+        self.stack.targets = self._targets
+        self.stack.error_target = self.error_target
+        self.stack.error_target_installed = []
+        target = TestTarget()
+        self.stack.push(target)
+        self.events = target.events
+
+    def stop(self):
+        targets = list(self._targets)
+        for _ in range(len(self.targets)):
+            self.stack.pop()
+        for attr, value in self.existing.items():
+            setattr(self.stack, attr, value)
+        # for later inspection
+        self._targets = targets
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop()
