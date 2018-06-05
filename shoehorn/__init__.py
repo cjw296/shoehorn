@@ -1,9 +1,15 @@
 from shoehorn.stdlib import StandardLibraryTarget
 from .logger import Logger
+from .targets import Stack
 
+#: The :class:`~shoehorn.targets.Stack` to handle errors.
+errors = Stack()
 
+#: The :class:`~shoehorn.targets.Stack` to handle logging.
+logging = Stack(error_target=errors)
 
-logger = Logger(StandardLibraryTarget())
+#: The root :class:`~shoehorn.logger.Logger`
+logger = Logger(logging)
 
 
 def get_logger(name=None):

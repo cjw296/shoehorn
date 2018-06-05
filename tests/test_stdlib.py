@@ -5,10 +5,14 @@ from tempfile import NamedTemporaryFile
 from testfixtures import LogCapture, OutputCapture, compare
 import pytest
 
-from shoehorn import get_logger
+from shoehorn import get_logger, logging
 from shoehorn.compat import PY2, PY36
 from shoehorn.event import Event
 from shoehorn.stdlib import StandardLibraryTarget, ShoehornFormatter
+from shoehorn.testing import Capture
+
+
+logger = get_logger()
 
 
 @pytest.fixture(autouse=True)
@@ -20,12 +24,18 @@ def capture():
         yield log
 
 
+@pytest.fixture(autouse=True)
+def target():
+    capture = Capture(logging)
+    target = StandardLibraryTarget()
+    with capture:
+        logging.push(target)
+        yield target
+
+
+
 class TestStandardLibraryTarget(object):
 
-
-    @pytest.fixture()
-    def target(self):
-        return StandardLibraryTarget()
 
     def test_minimal(self, target, capture):
         event = Event(event='test')
@@ -99,6 +109,69 @@ class TestStandardLibraryTarget(object):
         )
         compare('Stack (most recent call last):',
                 actual=capture.records[-1].stack_info.split('\n')[0])
+
+
+class TestStandardLibraryFullStack(object):
+
+    def test_minimal(self, capture):
+        logger.info(event='test')
+        capture.check(
+            ('root', 'INFO', '',
+             Event(event='test', level='info'))
+        )
+
+    def test_named_logger(self, capture):
+        logger = get_logger('foo')
+        logger.info(event='test')
+        capture.check(
+            ('foo', 'INFO', '',
+             Event(event='test', logger='foo', level='info'))
+        )
+
+    def test_level(self, capture):
+        logger.warning(event='test')
+        capture.check(
+            ('root', 'WARNING', '',
+             Event(event='test', level='warning'))
+        )
+
+    def test_sub_args(self, capture):
+        logger.info('foo %s', 'bar')
+        capture.check(
+            ('root', 'INFO', 'foo bar',
+             Event(message='foo %s', args=('bar', ), level='info'))
+        )
+
+    def test_exc_info(self, capture):
+        bad = Exception('bad')
+        try:
+            raise bad
+        except:
+            logger.exception('foo')
+        capture.check(
+            ('root', 'ERROR', 'foo',
+             Event(level='error', message='foo', exc_info=True))
+        )
+        compare(bad, actual=capture.records[-1].exc_info[1])
+
+    def test_stack_info(self, capture):
+        if PY2:
+            return
+        logger.info('foo', stack_info=True)
+        capture.check(
+            ('root', 'INFO', 'foo',
+             Event(message='foo', stack_info=True, level='info'))
+        )
+        compare('Stack (most recent call last):',
+                actual=capture.records[-1].stack_info.split('\n')[0])
+
+    def test_default_logger(self, capture):
+        from shoehorn import logger
+        logger.info('er hi')
+        capture.check(
+            ('root', 'INFO', 'er hi',
+             Event(message='er hi', level='info'))
+        )
 
 
 class TestShoehornFormatter(object):
