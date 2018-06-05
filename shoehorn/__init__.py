@@ -1,6 +1,6 @@
 from shoehorn.stdlib import StandardLibraryTarget
 from .logger import Logger
-from .targets import Stack
+from .targets.compose import Stack
 
 #: The :class:`~shoehorn.targets.Stack` to handle errors.
 errors = Stack()

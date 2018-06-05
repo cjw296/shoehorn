@@ -1,6 +1,6 @@
 from itertools import chain
 
-from .event import Event
+from ..event import Event
 
 
 MARKER = object()

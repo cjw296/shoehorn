@@ -1,7 +1,7 @@
 from testfixtures import compare
 
 from shoehorn.event import Event
-from shoehorn.targets import Stack, Layer
+from shoehorn.targets.compose import Stack, Layer
 from shoehorn.testing import TestTarget
 
 
