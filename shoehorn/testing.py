@@ -1,3 +1,6 @@
+from shoehorn import logging
+
+
 class TestTarget(object):
 
     __test__ = False
@@ -57,3 +60,14 @@ class Capture(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
+
+
+try:
+    import pytest
+except ImportError:  # pragma: no cover
+    pass
+else:
+    @pytest.fixture()
+    def capture():
+        with Capture(logging) as capture:
+            yield capture

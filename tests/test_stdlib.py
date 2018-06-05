@@ -9,7 +9,7 @@ from shoehorn import get_logger, logging
 from shoehorn.compat import PY2, PY36
 from shoehorn.event import Event
 from shoehorn.stdlib import StandardLibraryTarget, ShoehornFormatter
-from shoehorn.testing import Capture
+from shoehorn.testing import capture
 
 
 logger = get_logger()
@@ -25,13 +25,10 @@ def capture():
 
 
 @pytest.fixture(autouse=True)
-def target():
-    capture = Capture(logging)
+def target(capture):
     target = StandardLibraryTarget()
-    with capture:
-        logging.push(target)
-        yield target
-
+    logging.push(target)
+    return target
 
 
 class TestStandardLibraryTarget(object):
