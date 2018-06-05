@@ -12,8 +12,7 @@ logging = Stack(error_target=errors)
 logger = Logger(logging)
 
 
-def get_logger(name=None):
-    context = {}
+def get_logger(name=None, **context):
     if name is not None:
         context['logger'] = name
     return logger.bind(**context)

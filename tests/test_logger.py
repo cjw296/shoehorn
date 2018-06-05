@@ -2,9 +2,10 @@ from unittest import TestCase
 
 from testfixtures import compare, ShouldRaise
 
-from shoehorn import Logger
+from shoehorn import Logger, get_logger
 from shoehorn.compat import PY36
 from shoehorn.event import Event
+from shoehorn.testing import capture as log_capture
 
 
 class TestLogger(TestCase):
@@ -169,3 +170,18 @@ class TestLogger(TestCase):
         self.check_ordered(
             (('before', 1), ('after', 2), ('level', 'info'))
         )
+
+
+class TestGetLogger(object):
+
+    def test_just_name(self, log_capture):
+        get_logger('foo').info('bar')
+        compare(log_capture.events, expected=[
+            {'logger': 'foo', 'level': 'info', 'message': 'bar'},
+        ])
+
+    def test_with_context(self, log_capture):
+        get_logger(x='foo', y='bar').info('baz')
+        compare(log_capture.events, expected=[
+            {'x': 'foo', 'y': 'bar', 'level': 'info', 'message': 'baz'},
+        ])
