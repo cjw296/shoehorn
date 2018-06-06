@@ -1,4 +1,4 @@
-from io import StringIO
+from shoehorn.compat import StringIO
 
 import pytest
 from testfixtures import compare, TempDirectory, Replace
