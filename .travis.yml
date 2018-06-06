@@ -14,14 +14,14 @@ env:
 
 matrix:
   exclude:
-  - env: JSON=python-rapidjson
+  - env: JSON=rapidjson
     python: "2.7"
 
 install:
   - "pip install --upgrade pip setuptools"
   - "pip install -Ue .[test,build]"
-  - sh -c "if [ JSON = 'rapidjson' ]; then pip install 'python-rapidjson'; fi"
-  - sh -c "if [ JSON = 'ujson' ]; then pip install 'ujson'; fi"
+  - sh -c "if [ $JSON = 'rapidjson' ]; then pip install 'python-rapidjson'; fi"
+  - sh -c "if [ $JSON = 'ujson' ]; then pip install 'ujson'; fi"
 
 # command to run tests, e.g. python setup.py test
 script: coverage run --source shoehorn -m pytest
