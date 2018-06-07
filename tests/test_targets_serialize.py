@@ -13,26 +13,34 @@ def dir():
         yield dir
 
 
-class TestJson(object):
+class TestJSON(object):
+
+    def check_json(self, actual, expected):
+        # stdlib includes spaces, rapidjson does not :-/
+        if isinstance(actual, bytes):
+            actual = actual.replace(b' ', b'')
+        else:
+            actual = actual.replace(' ', '')
+        compare(actual, strict=True, expected=expected)
 
     def test_simple(self):
         stream = StringIO()
         target = JSON(stream)
         target(Event(x=1))
-        compare(stream.getvalue(), strict=True, expected='{"x":1}')
+        self.check_json(stream.getvalue(), expected='{"x":1}')
 
     def test_to_path(self, dir):
         target = JSON(dir.getpath('test.log'))
         target(Event(x=1))
         target.close()
-        compare(dir.read('test.log'), strict=True, expected=b'{"x":1}')
+        self.check_json(dir.read('test.log'), expected=b'{"x":1}')
 
     def test_to_path_append(self, dir):
         path = dir.write('test.log', b'{}\n')
         target = JSON(path)
         target(Event(x=1))
         target.close()
-        compare(dir.read('test.log'), strict=True, expected=b'{}\n{"x":1}')
+        self.check_json(dir.read('test.log'), expected=b'{}\n{"x":1}')
 
     def test_to_user_path(self, dir):
         def mock_expanduser(path):
@@ -41,4 +49,4 @@ class TestJson(object):
             target = JSON('~/test.log')
         target(Event(x=1))
         target.close()
-        compare(dir.read('test.log'), strict=True, expected=b'{"x":1}')
+        self.check_json(dir.read('test.log'), expected=b'{"x":1}')
