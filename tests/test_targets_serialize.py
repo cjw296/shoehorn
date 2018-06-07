@@ -1,3 +1,4 @@
+from datetime import datetime
 from shoehorn.compat import StringIO
 
 import pytest
@@ -28,6 +29,13 @@ class TestJSON(object):
         target = JSON(stream)
         target(Event(x=1))
         self.check_json(stream.getvalue(), expected='{"x":1}')
+
+    def test_date(self):
+        stream = StringIO()
+        target = JSON(stream)
+        target(Event(x=datetime(2016, 3, 11, 5, 45)))
+        self.check_json(stream.getvalue(),
+                        expected='{"x":"2016-03-1105:45:00"}')
 
     def test_to_path(self, dir):
         target = JSON(dir.getpath('test.log'))

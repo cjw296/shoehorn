@@ -16,7 +16,7 @@ class JSON(object):
         self.stream = stream
 
     def __call__(self, event):
-        self.serialize(event, self.stream)
+        self.serialize(event, self.stream, default=str)
 
     def close(self):
         self.stream.close()
