@@ -4,10 +4,7 @@ from ..compat import text_types
 try:
     from rapidjson import dump
 except ImportError:
-    try:
-        from ujson import dump
-    except ImportError:
-        from json import dump
+    from json import dump
 
 
 class JSON(object):
