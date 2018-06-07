@@ -2,10 +2,10 @@ from datetime import datetime
 from shoehorn.compat import StringIO
 
 import pytest
-from testfixtures import compare, TempDirectory, Replace
+from testfixtures import compare, TempDirectory, Replace, ShouldRaise
 
 from shoehorn.event import Event
-from shoehorn.targets.serialize import JSON
+from shoehorn.targets.serialize import JSON, LTSV
 
 
 @pytest.fixture()
@@ -58,3 +58,41 @@ class TestJSON(object):
         target(Event(x=1))
         target.close()
         self.check_json(dir.read('test.log'), expected=b'{"x":1}')
+
+
+class TestLTSV(object):
+
+    def test_simple(self, dir):
+        with open(dir.getpath('test.log'), 'wb') as stream:
+            target = LTSV(stream)
+            target(Event((('x', 1), ('y', u'2'), ('z', datetime(2001, 1, 1)))))
+        compare(dir.read('test.log', encoding='ascii'),
+                expected='x:1\ty:2\tz:2001-01-01 00 00 00\n')
+
+    def test_different_separators(self, dir):
+        with open(dir.getpath('test.log'), 'wb') as stream:
+            target = LTSV(stream, label_sep='=', item_sep='*')
+            target(Event((('x', 1), ('y', u'2'), ('z', datetime(2001, 1, 1)))))
+        compare(dir.read('test.log', encoding='ascii'),
+                expected='x=1*y=2*z=2001-01-01 00:00:00\n')
+
+    def test_escape_separators(self, dir):
+        with open(dir.getpath('test.log'), 'wb') as stream:
+            target = LTSV(stream)
+            target(Event((('label', ':'), ('item', '\t'), ('line', '\n'))))
+        compare(dir.read('test.log', encoding='ascii'),
+                expected='label: \titem: \tline: \n')
+
+    def test_bad_encoding(self, dir):
+        with open(dir.getpath('test.log'), 'wb') as stream:
+            target = LTSV(stream, encoding='ascii')
+            target(Event(pound=u"\u00A3"))
+        compare(dir.read('test.log', encoding='ascii'),
+                expected='pound:?\n')
+
+    def test_path_supplied(self, dir):
+        target = LTSV(dir.getpath('test.log'))
+        target(Event(pound=u"\u00A3"))
+        target.close()
+        compare(dir.read('test.log', encoding='utf-8'),
+                expected=u'pound:\u00A3\n')
