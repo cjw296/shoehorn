@@ -26,6 +26,15 @@ class TestStack(object):
         compare(t1.events, expected=['event'])
         compare(t2.events, expected=['event'])
 
+    def test_two_constructor(self):
+        t1 = TestTarget(propagate=True)
+        t2 = TestTarget()
+        s = Stack(t1, t2)
+        s.push()
+        s('event')
+        compare(t1.events, expected=['event'])
+        compare(t2.events, expected=['event'])
+
     def test_no_propagate(self):
         t1 = TestTarget(propagate=False)
         t2 = TestTarget()

@@ -16,10 +16,13 @@ def handle_error(target, exception, event):
 
 class Stack(object):
 
-    def __init__(self, error_target=None):
+    def __init__(self, *targets, **kw):
+        error_target = kw.pop('error_target', None)
+        assert not kw, 'only error_target is a keyword parameter'
         self.targets = []
         self.error_target = error_target
         self.error_target_installed = []
+        self.push(*targets)
 
     def push(self, *targets):
         self.targets[:] = chain(targets, self.targets)
