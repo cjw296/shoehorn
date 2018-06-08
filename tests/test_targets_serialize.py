@@ -1,9 +1,10 @@
 from datetime import datetime
-from shoehorn.compat import StringIO
+from io import BytesIO
 
 import pytest
 from testfixtures import compare, TempDirectory, Replace, ShouldRaise
 
+from shoehorn.compat import PY2
 from shoehorn.event import Event
 from shoehorn.targets.serialize import JSON, LTSV, Human
 
@@ -18,24 +19,21 @@ class TestJSON(object):
 
     def check_json(self, actual, expected):
         # stdlib includes spaces, rapidjson does not :-/
-        if isinstance(actual, bytes):
-            actual = actual.replace(b' ', b'')
-        else:
-            actual = actual.replace(' ', '')
+        actual = actual.replace(b' ', b'')
         compare(actual, strict=True, expected=expected)
 
     def test_simple(self):
-        stream = StringIO()
+        stream = BytesIO()
         target = JSON(stream)
         target(Event(x=1))
-        self.check_json(stream.getvalue(), expected='{"x":1}')
+        self.check_json(stream.getvalue(), expected=b'{"x":1}')
 
     def test_date(self):
-        stream = StringIO()
+        stream = BytesIO()
         target = JSON(stream)
         target(Event(x=datetime(2016, 3, 11, 5, 45)))
         self.check_json(stream.getvalue(),
-                        expected='{"x":"2016-03-1105:45:00"}')
+                        expected=b'{"x":"2016-03-1105:45:00"}')
 
     def test_to_path(self, dir):
         target = JSON(dir.getpath('test.log'))
@@ -63,32 +61,32 @@ class TestJSON(object):
 class TestLTSV(object):
 
     def test_simple(self, dir):
-        with open(dir.getpath('test.log'), 'wb') as stream:
-            target = LTSV(stream)
-            target(Event((('x', 1), ('y', u'2'), ('z', datetime(2001, 1, 1)))))
-        compare(dir.read('test.log', encoding='ascii'),
-                expected='x:1\ty:2\tz:2001-01-01 00 00 00\n')
+        stream = BytesIO()
+        target = LTSV(stream)
+        target(Event((('x', 1), ('y', u'2'), ('z', datetime(2001, 1, 1)))))
+        compare(stream.getvalue(),
+                expected=b'x:1\ty:2\tz:2001-01-01 00 00 00\n')
 
     def test_different_separators(self, dir):
-        with open(dir.getpath('test.log'), 'wb') as stream:
-            target = LTSV(stream, label_sep='=', item_sep='*')
-            target(Event((('x', 1), ('y', u'2'), ('z', datetime(2001, 1, 1)))))
-        compare(dir.read('test.log', encoding='ascii'),
-                expected='x=1*y=2*z=2001-01-01 00:00:00\n')
+        stream = BytesIO()
+        target = LTSV(stream, label_sep='=', item_sep='*')
+        target(Event((('x', 1), ('y', u'2'), ('z', datetime(2001, 1, 1)))))
+        compare(stream.getvalue(),
+                expected=b'x=1*y=2*z=2001-01-01 00:00:00\n')
 
     def test_escape_separators(self, dir):
-        with open(dir.getpath('test.log'), 'wb') as stream:
-            target = LTSV(stream)
-            target(Event((('label', ':'), ('item', '\t'), ('line', '\n'))))
-        compare(dir.read('test.log', encoding='ascii'),
-                expected='label: \titem: \tline: \n')
+        stream = BytesIO()
+        target = LTSV(stream)
+        target(Event((('label', ':'), ('item', '\t'), ('line', '\n'))))
+        compare(stream.getvalue(),
+                expected=b'label: \titem: \tline: \n')
 
     def test_bad_encoding(self, dir):
-        with open(dir.getpath('test.log'), 'wb') as stream:
-            target = LTSV(stream, encoding='ascii')
-            target(Event(pound=u"\u00A3"))
-        compare(dir.read('test.log', encoding='ascii'),
-                expected='pound:?\n')
+        stream = BytesIO()
+        target = LTSV(stream, encoding='ascii')
+        target(Event(pound=u"\u00A3"))
+        compare(stream.getvalue(),
+                expected=b'pound:?\n')
 
     def test_path_supplied(self, dir):
         target = LTSV(dir.getpath('test.log'))
@@ -102,60 +100,63 @@ class TestLTSV(object):
         with ShouldRaise(AssertionError(
             "separators can only be one character is length"
         )):
-            LTSV(StringIO(), **{sep: 'xx'})
+            LTSV(BytesIO(), **{sep: 'xx'})
 
     @pytest.mark.parametrize("sep", ['label_sep', 'item_sep'])
     def test_separator_too_long(self, sep):
         with ShouldRaise(AssertionError(
             "space cannot be used as a separator"
         )):
-            LTSV(StringIO(), **{sep: ' '})
+            LTSV(BytesIO(), **{sep: ' '})
 
 
 class TestHuman(object):
 
     def test_simple(self, dir):
-        with open(dir.getpath('test.log'), 'wb') as stream:
-            target = Human(stream)
-            target(Event((('x', 1), ('y', '2'), ('z', datetime(2001, 1, 1)))))
-        compare(dir.read('test.log', encoding='ascii'),
-                expected="x=1, y='2', z=datetime.datetime(2001, 1, 1, 0, 0)\n")
+        stream = BytesIO()
+        target = Human(stream)
+        target(Event((('x', 1), ('y', '2'), ('z', datetime(2001, 1, 1)))))
+        compare(stream.getvalue(),
+                expected=b"x=1, y='2', z=datetime.datetime(2001, 1, 1, 0, 0)\n")
 
     def test_prefix(self, dir):
-        with open(dir.getpath('test.log'), 'wb') as stream:
-            target = Human(stream, prefix='{z:%Y-%m} {x!r} {a}: ')
-            target(Event((
-                ('x', 1),
-                ('y', '2'),
-                ('z', datetime(2001, 1, 1)),
-                ('a', 'foo'),
-                ('b', 'bar'),
-            )))
-        compare(dir.read('test.log', encoding='ascii'),
-                expected="2001-01 1 foo: y='2', b='bar'\n")
+        stream = BytesIO()
+        target = Human(stream, prefix='{z:%Y-%m} {x!r} {a}: ')
+        target(Event((
+            ('x', 1),
+            ('y', '2'),
+            ('z', datetime(2001, 1, 1)),
+            ('a', 'foo'),
+            ('b', 'bar'),
+        )))
+        compare(stream.getvalue(),
+                expected=b"2001-01 1 foo: y='2', b='bar'\n")
 
     def test_ignore(self, dir):
-        with open(dir.getpath('test.log'), 'wb') as stream:
-            target = Human(stream, ignore={'z'})
-            target(Event((('x', 1), ('y', '2'), ('z', datetime(2001, 1, 1)))))
-        compare(dir.read('test.log', encoding='ascii'),
-                expected="x=1, y='2'\n")
+        stream = BytesIO()
+        target = Human(stream, ignore={'z'})
+        target(Event((('x', 1), ('y', '2'), ('z', datetime(2001, 1, 1)))))
+        compare(stream.getvalue(),
+                expected=b"x=1, y='2'\n")
 
     def test_only(self, dir):
-        with open(dir.getpath('test.log'), 'wb') as stream:
-            target = Human(stream, only={'x', 'y'})
-            target(Event((('x', 1), ('y', '2'), ('z', datetime(2001, 1, 1)))))
-        compare(dir.read('test.log', encoding='ascii'),
-                expected="x=1, y='2'\n")
+        stream = BytesIO()
+        target = Human(stream, only={'x', 'y'})
+        target(Event((('x', 1), ('y', '2'), ('z', datetime(2001, 1, 1)))))
+        compare(stream.getvalue(),
+                expected=b"x=1, y='2'\n")
 
     def test_bad_encoding(self, dir):
-        with open(dir.getpath('test.log'), 'wb') as stream:
-            target = Human(stream, encoding='ascii')
-            target(Event(pound=u"\u00A3"))
-        compare(dir.read('test.log', encoding='ascii'),
-                expected="pound='?'\n")
+        stream = BytesIO()
+        target = Human(stream, encoding='ascii')
+        target(Event(pound=u"\u00A3"))
+        if PY2:
+            expected="pound=u'\\xa3'\n"
+        else:
+            expected=b"pound='?'\n"
+        compare(expected, actual=stream.getvalue())
 
     @pytest.mark.parametrize("prefix", ['{}', '{0}', '{!}', '{:.foo}'])
     def test_empty_curlies(self, prefix):
         with ShouldRaise(AssertionError("bad prefix templating: "+prefix)):
-            Human(StringIO(), prefix=prefix)
+            Human(BytesIO(), prefix=prefix)
