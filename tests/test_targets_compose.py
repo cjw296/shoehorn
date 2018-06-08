@@ -63,6 +63,16 @@ class TestStack(object):
         s('event')
         compare(t.events, expected=['something else'])
 
+    def test_filter(self):
+        t = TestTarget()
+        s = Stack(
+            lambda event: event['foo'] == 'bar',
+            t
+        )
+        s({'foo': 'bar'})
+        s({'foo': 'baz'})
+        compare(t.events, expected=[{'foo': 'bar'}])
+
     def test_error_with_handler(self):
         e = Exception('boom!')
         def handle(event):

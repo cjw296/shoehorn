@@ -43,9 +43,11 @@ class Stack(object):
     def __call__(self, event):
         try:
             for target in self.targets:
-                event = target(event)
-                if event is None:
+                result = target(event)
+                if not result:
                     break
+                elif result is not True:
+                    event = result
         except Exception as exception:
             handle_error(self.error_target, exception, event)
 
