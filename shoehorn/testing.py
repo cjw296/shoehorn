@@ -1,3 +1,5 @@
+from collections import deque
+
 from shoehorn import logging
 
 
@@ -23,14 +25,14 @@ class TestTarget(object):
 class Capture(object):
 
     def __init__(self, stack):
-        self._targets = []
+        self._targets = deque()
         self.events = []
         self.stack = stack
 
     @property
     def targets(self):
         # don't include our own test target
-        return self._targets[:-1]
+        return list(self._targets)[:-1]
 
     def error_target(self, event):
         raise event['exception']
@@ -46,9 +48,9 @@ class Capture(object):
         self.events = target.events
 
     def stop(self):
-        targets = list(self._targets)
-        for _ in range(len(self.targets)):
-            self.stack.pop()
+        targets = []
+        while self._targets:
+            targets.append(self.stack.pop())
         for attr, value in self.existing.items():
             setattr(self.stack, attr, value)
         # for later inspection

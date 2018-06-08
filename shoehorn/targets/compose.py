@@ -1,3 +1,4 @@
+from collections import deque
 from itertools import chain
 
 from ..event import Event
@@ -19,13 +20,13 @@ class Stack(object):
     def __init__(self, *targets, **kw):
         error_target = kw.pop('error_target', None)
         assert not kw, 'only error_target is a keyword parameter'
-        self.targets = []
+        self.targets = deque()
         self.error_target = error_target
         self.error_target_installed = []
         self.push(*targets)
 
     def push(self, *targets):
-        self.targets[:] = chain(targets, self.targets)
+        self.targets.extendleft(reversed(targets))
         if self.error_target is not None:
             for target in targets:
                 if getattr(target, 'error_target', MARKER) is None:
@@ -33,7 +34,7 @@ class Stack(object):
                     self.error_target_installed.append(target)
 
     def pop(self):
-        target = self.targets.pop(0)
+        target = self.targets.popleft()
         if target in self.error_target_installed:
             target.error_target = None
             self.error_target_installed.remove(target)

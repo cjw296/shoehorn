@@ -104,12 +104,12 @@ class TestStack(object):
         target1 = object()
         target2 = object()
         s.push(target1, target2)
-        assert s.targets == [target1, target2]
+        assert list(s.targets) == [target1, target2]
         returned = s.pop()
         assert returned is target1
         returned = s.pop()
         assert returned is target2
-        assert s.targets == []
+        assert list(s.targets) == []
 
     def test_pop_error_target(self):
         error_target = object()
