@@ -4,7 +4,7 @@ import re
 from os.path import expanduser
 
 from ..compat import text_types, Unicode
-
+from ..event import Event
 try:
     from rapidjson import dump
 except ImportError:
@@ -22,6 +22,16 @@ class Serializer(object):
         self.stream.close()
 
 
+class EncodedWrite(object):
+
+    def write(self, *parts):
+        parts = [p.encode(self.encoding, errors='replace')
+                 if isinstance(p, Unicode) else p
+                 for p in parts]
+        parts.append(b'\n')
+        self.stream.write(b''.join(parts))
+
+
 class JSON(Serializer):
 
     def __init__(self, stream, serialize=dump):
@@ -32,7 +42,7 @@ class JSON(Serializer):
         self.serialize(event, self.stream, default=str)
 
 
-class LTSV(Serializer):
+class LTSV(EncodedWrite, Serializer):
     # http://ltsv.org/
 
     def __init__(self, stream, label_sep=':', item_sep='\t', encoding='utf-8'):
@@ -50,10 +60,38 @@ class LTSV(Serializer):
         return self.sub(' ', Unicode(item))
 
     def __call__(self, event):
-        text = event.serialize(
+        self.write(event.serialize(
             self.label_sep, self.item_sep.join, quote=self.quote
+        ))
+
+
+class Human(EncodedWrite, Serializer):
+
+    prefix_pattern = re.compile('(?<={)[^:!}]+')
+    prefix_bad_pattern = re.compile('{\d*(?:[:!].*)?}')
+    only = None
+
+    def __init__(self, stream, prefix='', ignore=None, only=None,
+                 encoding='utf-8'):
+        self._make_stream(stream)
+        bad_prefix = self.prefix_bad_pattern.findall(prefix)
+        if bad_prefix:
+            raise AssertionError('bad prefix templating: {}'.format(
+                ', '.join(bad_prefix)
+            ))
+        self.prefix = prefix
+        self.exclude_keys = set(self.prefix_pattern.findall(prefix))
+        if ignore:
+            self.exclude_keys.update(ignore)
+        if only:
+            self.only = set(only)
+        self.encoding = encoding
+
+    def __call__(self, event):
+        if self.only is not None:
+            event = Event((k, v) for (k, v) in event.items()
+                          if k in self.only)
+        self.write(
+            self.prefix.format(**event),
+            event.serialize(exclude_keys=self.exclude_keys),
         )
-        if isinstance(text, Unicode):
-            text = text.encode(self.encoding, errors='replace')
-        self.stream.write(text)
-        self.stream.write(b'\n')
