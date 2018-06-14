@@ -1,12 +1,13 @@
 from datetime import datetime
 from io import BytesIO
+from json import dumps as stdlib_dumps
 
 import pytest
 from testfixtures import compare, TempDirectory, Replace, ShouldRaise
 
 from shoehorn.compat import PY2
 from shoehorn.event import Event
-from shoehorn.targets.serialize import JSON, LTSV, Human
+from shoehorn.targets.serialize import JSON, LTSV, Human, dumps
 
 
 @pytest.fixture()
@@ -35,6 +36,8 @@ class TestJSON(object):
                       ('unicodes', u"\u00A3"))))
         if PY2:
             expected = '{"bytes":"\'\\\\xa3\'","unicodes":"\\u00a3"}'
+        elif dumps is stdlib_dumps:
+            expected = b'{"bytes":"b\'\\\\xa3\'","unicodes":"\\u00a3"}'
         else:
             expected = b'{"bytes":"b\'\\\\xa3\'","unicodes":"\\u00A3"}'
         self.check_json(actual=stream.getvalue(), expected=expected)
