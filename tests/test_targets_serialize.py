@@ -28,6 +28,26 @@ class TestJSON(object):
         target(Event(x=1))
         self.check_json(stream.getvalue(), expected=b'{"x":1}')
 
+    def test_mixed_unicode_byte_values(self):
+        stream = BytesIO()
+        target = JSON(stream)
+        target(Event((('bytes', u"\u00A3".encode('latin1')),
+                      ('unicodes', u"\u00A3"))))
+        if PY2:
+            expected = '{"bytes":"\'\\\\xa3\'","unicodes":"\\u00a3"}'
+        else:
+            expected = b'{"bytes":"b\'\\\\xa3\'","unicodes":"\\u00A3"}'
+        self.check_json(actual=stream.getvalue(), expected=expected)
+
+    def test_floats(self):
+        stream = BytesIO()
+        target = JSON(stream)
+        target(Event(nan=float('nan'), p_inf=float('inf'), n_inf=float('-inf')))
+        self.check_json(
+            stream.getvalue(),
+            expected=b'{"nan":NaN,"p_inf":Infinity,"n_inf":-Infinity}'
+        )
+
     def test_date(self):
         stream = BytesIO()
         target = JSON(stream)
@@ -67,6 +87,24 @@ class TestLTSV(object):
         compare(stream.getvalue(),
                 expected=b'x:1\ty:2\tz:2001-01-01 00 00 00\n')
 
+    def test_mixed_unicode_byte_values(self):
+        stream = BytesIO()
+        target = LTSV(stream)
+        target(Event(byte_pound=u"\u00A3".encode('latin1'),
+                     unicode_pound=u"\u00A3"))
+        if PY2:
+            expected = b"byte_pound:'\\xa3'\tunicode_pound:\xc2\xa3\n"
+        else:
+            expected=b"byte_pound:b'\\xa3'\tunicode_pound:\xc2\xa3\n"
+        compare(expected, actual=stream.getvalue())
+
+    def test_floats(self):
+        stream = BytesIO()
+        target = LTSV(stream)
+        target(Event(nan=float('nan'), p_inf=float('inf'), n_inf=float('-inf')))
+        compare(stream.getvalue(),
+                expected=b"nan:nan\tp_inf:inf\tn_inf:-inf\n")
+
     def test_different_separators(self, dir):
         stream = BytesIO()
         target = LTSV(stream, label_sep='=', item_sep='*')
@@ -95,6 +133,14 @@ class TestLTSV(object):
         compare(dir.read('test.log', encoding='utf-8'),
                 expected=u'pound:\u00A3\n')
 
+    def test_to_path_append(self, dir):
+        path = dir.write('test.log', b'{}\n')
+        target = LTSV(path)
+        target(Event(x=1))
+        target.close()
+        compare(dir.read('test.log', encoding='utf-8'),
+                expected=u'{}\nx:1\n')
+
     @pytest.mark.parametrize("sep", ['label_sep', 'item_sep'])
     def test_separator_too_long(self, sep):
         with ShouldRaise(AssertionError(
@@ -118,6 +164,24 @@ class TestHuman(object):
         target(Event((('x', 1), ('y', '2'), ('z', datetime(2001, 1, 1)))))
         compare(stream.getvalue(),
                 expected=b"x=1, y='2', z=datetime.datetime(2001, 1, 1, 0, 0)\n")
+
+    def test_mixed_unicode_byte_values(self):
+        stream = BytesIO()
+        target = Human(stream)
+        target(Event(byte_pound=u"\u00A3".encode('latin1'),
+                     unicode_pound=u"\u00A3"))
+        if PY2:
+            expected = "byte_pound='\\xa3', unicode_pound=u'\\xa3'\n"
+        else:
+            expected = b"byte_pound=b'\\xa3', unicode_pound='\xc2\xa3'\n"
+        compare(expected, actual=stream.getvalue())
+
+    def test_floats(self):
+        stream = BytesIO()
+        target = Human(stream)
+        target(Event(nan=float('nan'), p_inf=float('inf'), n_inf=float('-inf')))
+        compare(stream.getvalue(),
+                expected=b'nan=nan, p_inf=inf, n_inf=-inf\n')
 
     def test_prefix(self, dir):
         stream = BytesIO()
@@ -160,3 +224,21 @@ class TestHuman(object):
     def test_empty_curlies(self, prefix):
         with ShouldRaise(AssertionError("bad prefix templating: "+prefix)):
             Human(BytesIO(), prefix=prefix)
+
+    def test_path_supplied(self, dir):
+        target = Human(dir.getpath('test.log'))
+        target(Event(pound=u"\u00A3"))
+        target.close()
+        if PY2:
+            expected=u"pound=u'\\xa3'\n"
+        else:
+            expected=u"pound='\u00A3'\n"
+        compare(expected, actual=dir.read('test.log', encoding='utf-8'))
+
+    def test_to_path_append(self, dir):
+        path = dir.write('test.log', b'{}\n')
+        target = Human(path)
+        target(Event(x=1))
+        target.close()
+        compare(dir.read('test.log', encoding='utf-8'),
+                expected='{}\nx=1\n')

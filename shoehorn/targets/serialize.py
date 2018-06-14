@@ -1,28 +1,27 @@
 from __future__ import print_function
 
-import re
 from os.path import expanduser
+import re
 
-from ..compat import text_types, Unicode
+from ..compat import text_types, Unicode, PY2
 from ..event import Event
 try:
-    from rapidjson import dump
+    from rapidjson import dumps
 except ImportError:
-    from json import dump
+    from json import dumps
 
 
 class Serializer(object):
 
-    def _make_stream(self, stream):
+    encoding = 'utf-8'
+
+    def __init__(self, stream):
         if isinstance(stream, text_types):
             stream = open(expanduser(stream), 'ab')
         self.stream = stream
 
     def close(self):
         self.stream.close()
-
-
-class EncodedWrite(object):
 
     def write(self, *parts):
         parts = [p.encode(self.encoding, errors='replace')
@@ -34,30 +33,49 @@ class EncodedWrite(object):
 
 class JSON(Serializer):
 
-    def __init__(self, stream, serialize=dump):
-        self._make_stream(stream)
-        self.serialize = serialize
-
     def __call__(self, event):
-        self.serialize(event, self.stream, default=str)
+        try:
+            text = dumps(event, default=str)
+        except UnicodeDecodeError:
+            # slow path...
+            if PY2:
+                safe_event = Event()
+                for k, v in event.items():
+                    if isinstance(v, str):
+                        try:
+                            v = v.decode(self.encoding)
+                        except UnicodeDecodeError:
+                            v = repr(v)
+                    safe_event[k] = v
+            else:
+                safe_event = Event(
+                    (k, repr(v) if isinstance(v, bytes) else v)
+                    for (k, v) in event.items()
+                )
+            text = dumps(safe_event, default=str)
+        self.stream.write(text.encode(self.encoding))
 
 
-class LTSV(EncodedWrite, Serializer):
+class LTSV(Serializer):
     # http://ltsv.org/
 
     def __init__(self, stream, label_sep=':', item_sep='\t', encoding='utf-8'):
+        super(LTSV, self).__init__(stream)
         assert set(len(sep) for sep in (label_sep, item_sep)) == {1}, \
             'separators can only be one character is length'
         assert ' ' not in (label_sep, item_sep), \
             'space cannot be used as a separator'
-        self._make_stream(stream)
         self.label_sep = label_sep
         self.item_sep = item_sep
         self.sub = re.compile('['+'\n\r'+label_sep+item_sep+']').sub
         self.encoding = encoding
 
     def quote(self, item):
-        return self.sub(' ', Unicode(item))
+        try:
+            item = Unicode(item)
+        except UnicodeDecodeError:
+            item = repr(item)
+        return self.sub(' ', item)
 
     def __call__(self, event):
         self.write(event.serialize(
@@ -65,7 +83,7 @@ class LTSV(EncodedWrite, Serializer):
         ))
 
 
-class Human(EncodedWrite, Serializer):
+class Human(Serializer):
 
     prefix_pattern = re.compile('(?<={)[^:!}]+')
     prefix_bad_pattern = re.compile('{\d*(?:[:!].*)?}')
@@ -73,7 +91,7 @@ class Human(EncodedWrite, Serializer):
 
     def __init__(self, stream, prefix='', ignore=None, only=None,
                  encoding='utf-8'):
-        self._make_stream(stream)
+        super(Human, self).__init__(stream)
         bad_prefix = self.prefix_bad_pattern.findall(prefix)
         if bad_prefix:
             raise AssertionError('bad prefix templating: {}'.format(
