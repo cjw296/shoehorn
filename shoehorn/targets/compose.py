@@ -1,8 +1,6 @@
 from collections import deque
-from itertools import chain
 
 from ..event import Event
-
 
 MARKER = object()
 
@@ -11,7 +9,7 @@ def handle_error(target, exception, event):
     if target is not None:
         target(Event((
             ('exception', exception),
-            ('event', event)
+            ('event', repr(event))
         )))
 
 
