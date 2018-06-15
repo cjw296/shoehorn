@@ -37,11 +37,9 @@ jobs:
 
       install: "pip install -U coveralls-check"
       script: |
-        export
         export COVERALLS_ENDPOINT=https://coveralls.io/webhook
         export COVERALLS_REPO_TOKEN=fv7fP6yIYGu3BT0i4ns2efY9NPZKsyedv
-
-        curl -k $COVERALLS_ENDPOINT/webhook?repo_token=$COVERALLS_REPO_TOKEN -d "payload[build_num]=$BUILD_NUMBER&payload[status]=done"
+        curl -k $COVERALLS_ENDPOINT?repo_token=$COVERALLS_REPO_TOKEN -d "payload[build_num]=$TRAVIS_BUILD_NUMBER&payload[status]=done"
         coveralls-check $TRAVIS_COMMIT
 
     - stage: release
