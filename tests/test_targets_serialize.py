@@ -58,6 +58,13 @@ class TestJSON(object):
         self.check_json(stream.getvalue(),
                         expected=b'{"x":"2016-03-1105:45:00"}')
 
+    def test_multiline(self):
+        stream = BytesIO()
+        target = JSON(stream)
+        target(Event((('windows', '\r\n'), ('linux', '\n'))))
+        self.check_json(stream.getvalue(),
+                        expected=b'{"windows":"\\r\\n","linux":"\\n"}')
+
     def test_to_path(self, dir):
         target = JSON(dir.getpath('test.log'))
         target(Event(x=1))
@@ -107,6 +114,13 @@ class TestLTSV(object):
         target(Event(nan=float('nan'), p_inf=float('inf'), n_inf=float('-inf')))
         compare(stream.getvalue(),
                 expected=b"nan:nan\tp_inf:inf\tn_inf:-inf\n")
+
+    def test_multiline(self):
+        stream = BytesIO()
+        target = LTSV(stream)
+        target(Event((('windows', 'foo\r\nbar'), ('linux', 'baz\nbob'))))
+        compare(stream.getvalue(),
+                expected=b'windows:foo  bar\tlinux:baz bob\n')
 
     def test_different_separators(self, dir):
         stream = BytesIO()
@@ -224,9 +238,24 @@ class TestHuman(object):
         compare(expected, actual=stream.getvalue())
 
     @pytest.mark.parametrize("prefix", ['{}', '{0}', '{!}', '{:.foo}'])
-    def test_empty_curlies(self, prefix):
+    def test_bad_prefixes(self, prefix):
         with ShouldRaise(AssertionError("bad prefix templating: "+prefix)):
             Human(BytesIO(), prefix=prefix)
+
+    def test_newlines_values(self):
+        stream = BytesIO()
+        target = Human(stream)
+        target(Event((('x', 1), ('c', 'foo\nbar\n'),
+                      ('y', '2'), ('b', 'baz\r\nbob'))))
+        compare(stream.getvalue(),
+                expected=b"x=1, y='2'\n"
+                         b"c:\n"
+                         b"foo\n"
+                         b"bar\n"
+                         b"\n"
+                         b"b:\n"
+                         b"baz\r\n"
+                         b"bob\n")
 
     def test_path_supplied(self, dir):
         target = Human(dir.getpath('test.log'))

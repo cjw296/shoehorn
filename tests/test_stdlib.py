@@ -2,15 +2,13 @@ from collections import OrderedDict
 from logging import WARNING, StreamHandler, getLogger, FileHandler
 from tempfile import NamedTemporaryFile
 
-from testfixtures import LogCapture, OutputCapture, compare
 import pytest
+from testfixtures import LogCapture, OutputCapture, compare
 
 from shoehorn import get_logger, logging
 from shoehorn.compat import PY2, PY36
 from shoehorn.event import Event
 from shoehorn.stdlib import StandardLibraryTarget, ShoehornFormatter
-from shoehorn.testing import capture
-
 
 logger = get_logger()
 
