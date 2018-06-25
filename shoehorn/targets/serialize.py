@@ -79,7 +79,7 @@ class LTSV(Serializer):
 
     def __call__(self, event):
         self.write(event.serialize(
-            self.label_sep, self.item_sep.join, quote=self.quote
+            kw=self.label_sep, join=self.item_sep.join, quote=self.quote
         ))
 
 
@@ -109,7 +109,9 @@ class Human(Serializer):
         if self.only is not None:
             event = Event((k, v) for (k, v) in event.items()
                           if k in self.only)
+        exclude, post = event.extract_newline_values(self.exclude_keys)
         self.write(
             self.prefix.format(**event),
-            event.serialize(exclude_keys=self.exclude_keys),
+            event.serialize(exclude),
+            post,
         )

@@ -58,17 +58,9 @@ class ShoehornFormatter(Formatter):
             if event is None:
                 record.shoehorn_context = record.shoehorn_post = ''
             else:
-                post = []
-                exclude = self.exclude_keys.copy()
-                for k, v in sorted(event.items()):
-                    if k not in exclude and isinstance(v, text_types) and '\n' in v:
-                        post.append('\n'+k+':\n'+v)
-                        exclude.add(k)
-
-                record.shoehorn_context = event.serialize(
-                    join=' '.join, exclude_keys=exclude
-                )
-                record.shoehorn_post = ''.join(post)
+                exclude, post = event.extract_newline_values(self.exclude_keys)
+                record.shoehorn_context = event.serialize(exclude, ' '.join)
+                record.shoehorn_post = post
 
         if record.shoehorn_context:
             record.shoehorn_context = ' ' + record.shoehorn_context.lstrip()
