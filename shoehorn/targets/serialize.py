@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+from io import open
 from os.path import expanduser
 import re
 
@@ -13,22 +14,17 @@ except ImportError:
 
 class Serializer(object):
 
-    encoding = 'utf-8'
-
     def __init__(self, stream):
         if isinstance(stream, text_types):
-            stream = open(expanduser(stream), 'ab')
+            stream = open(expanduser(stream), 'a', errors='backslashreplace')
         self.stream = stream
 
     def close(self):
         self.stream.close()
 
     def write(self, *parts):
-        parts = [p.encode(self.encoding, errors='replace')
-                 if isinstance(p, Unicode) else p
-                 for p in parts]
-        parts.append(b'\n')
-        self.stream.write(b''.join(parts))
+        self.stream.write(u''.join(parts)+'\n')
+        self.stream.flush()
 
 
 class JSON(Serializer):
@@ -41,9 +37,13 @@ class JSON(Serializer):
             if PY2:
                 safe_event = Event()
                 for k, v in event.items():
+                    if self.stream.encoding:
+                        encoding = (self.stream.encoding,)
+                    else:
+                        encoding = ()
                     if isinstance(v, str):
                         try:
-                            v = v.decode(self.encoding)
+                            v = v.decode(*encoding)
                         except UnicodeDecodeError:
                             v = repr(v)
                     safe_event[k] = v
@@ -53,13 +53,15 @@ class JSON(Serializer):
                     for (k, v) in event.items()
                 )
             text = dumps(safe_event, default=str)
-        self.stream.write(text.encode(self.encoding))
+        if isinstance(text, bytes):
+            text = text.decode('utf8')
+        self.stream.write(text)
 
 
 class LTSV(Serializer):
     # http://ltsv.org/
 
-    def __init__(self, stream, label_sep=':', item_sep='\t', encoding='utf-8'):
+    def __init__(self, stream, label_sep=':', item_sep='\t'):
         super(LTSV, self).__init__(stream)
         assert set(len(sep) for sep in (label_sep, item_sep)) == {1}, \
             'separators can only be one character is length'
@@ -68,7 +70,6 @@ class LTSV(Serializer):
         self.label_sep = label_sep
         self.item_sep = item_sep
         self.sub = re.compile('['+'\n\r'+label_sep+item_sep+']').sub
-        self.encoding = encoding
 
     def quote(self, item):
         try:
@@ -89,8 +90,7 @@ class Human(Serializer):
     prefix_bad_pattern = re.compile('{\d*(?:[:!].*)?}')
     only = None
 
-    def __init__(self, stream, prefix='', ignore=None, only=None,
-                 encoding='utf-8'):
+    def __init__(self, stream, prefix='', ignore=None, only=None):
         super(Human, self).__init__(stream)
         bad_prefix = self.prefix_bad_pattern.findall(prefix)
         if bad_prefix:
@@ -103,7 +103,6 @@ class Human(Serializer):
             self.exclude_keys.update(ignore)
         if only:
             self.only = set(only)
-        self.encoding = encoding
 
     def __call__(self, event):
         if self.only is not None:
