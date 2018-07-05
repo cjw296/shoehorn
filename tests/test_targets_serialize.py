@@ -3,18 +3,12 @@ from io import StringIO, open as io_open
 from json import dumps as stdlib_dumps
 
 import pytest
-from testfixtures import compare, TempDirectory, Replace, ShouldRaise
+from testfixtures import compare, Replace, ShouldRaise
 
 from shoehorn.compat import PY2
 from shoehorn.event import Event
 from shoehorn.targets.serialize import JSON, LTSV, Human, dumps
 from .common import run_in_ascii
-
-
-@pytest.fixture()
-def dir():
-    with TempDirectory() as dir:
-        yield dir
 
 
 class TestStreams(object):
