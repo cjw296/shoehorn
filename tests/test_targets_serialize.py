@@ -1,9 +1,6 @@
-import sys
 from datetime import datetime
 from io import StringIO
 from json import dumps as stdlib_dumps
-from subprocess import check_call
-from textwrap import dedent
 
 import pytest
 from testfixtures import compare, TempDirectory, Replace, ShouldRaise
@@ -11,7 +8,6 @@ from testfixtures import compare, TempDirectory, Replace, ShouldRaise
 from shoehorn.compat import PY2
 from shoehorn.event import Event
 from shoehorn.targets.serialize import JSON, LTSV, Human, dumps
-
 from .common import run_in_ascii
 
 
@@ -19,6 +15,25 @@ from .common import run_in_ascii
 def dir():
     with TempDirectory() as dir:
         yield dir
+
+
+class TestStreams(object):
+
+    def test_stdout_escaping(self, dir):
+        with open(dir.getpath('test.out'), 'wb') as target:
+            run_in_ascii(dir, stdout=target, code="""
+            from shoehorn.targets.serialize import STDOUT
+            STDOUT.write(u'pound:\u00A3')
+            """)
+        compare(dir.read('test.out'), expected=b"pound:\\xa3")
+
+    def test_stderr_escaping(self, dir):
+        with open(dir.getpath('test.err'), 'wb') as target:
+            run_in_ascii(dir, stderr=target, code="""
+            from shoehorn.targets.serialize import STDERR
+            STDERR.write(u'pound:\u00A3')
+            """)
+        compare(dir.read('test.err'), expected=b"pound:\\xa3")
 
 
 class TestJSON(object):

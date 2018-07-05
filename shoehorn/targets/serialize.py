@@ -2,7 +2,9 @@ from __future__ import print_function
 
 from io import open
 from os.path import expanduser
+import os
 import re
+import sys
 
 from ..compat import text_types, Unicode, PY2
 from ..event import Event
@@ -10,6 +12,14 @@ try:
     from rapidjson import dumps
 except ImportError:
     from json import dumps
+
+
+def safe_stream(stream):
+    return open(os.dup(stream.fileno()), 'w', errors='backslashreplace')
+
+
+STDOUT = safe_stream(sys.stdout)
+STDERR = safe_stream(sys.stderr)
 
 
 class Serializer(object):
