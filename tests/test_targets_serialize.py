@@ -1,5 +1,5 @@
 from datetime import datetime
-from io import StringIO
+from io import StringIO, open as io_open
 from json import dumps as stdlib_dumps
 
 import pytest
@@ -63,6 +63,16 @@ class TestJSON(object):
         else:
             expected = '{"bytes":"b\'\\\\xa3\'","unicodes":"\\u00A3"}'
         self.check_json(actual=stream.getvalue(), expected=expected)
+
+    def test_stream_has_encoding(self, dir):
+        with io_open(dir.getpath('test.log'), 'w', encoding='ascii') as stream:
+            target = JSON(stream)
+            target(Event(pound=u"\u00A3".encode('latin1')))
+        if PY2:
+            expected = u'{"pound":"\'\\\\xa3\'"}'
+        else:
+            expected = u'{"pound":"b\'\\\\xa3\'"}'
+        self.check_json(actual=dir.read('test.log'), expected=expected)
 
     def test_floats(self):
         stream = StringIO()
