@@ -30,6 +30,18 @@ after_success:
 jobs:
   include:
 
+    - stage: coverage
+      if: type != cron
+      python: 3.6
+      after_success: skip
+
+      install: "pip install -U coveralls-check"
+      script: |
+        export COVERALLS_ENDPOINT=https://coveralls.io/webhook
+        export COVERALLS_REPO_TOKEN=fv7fP6yIYGu3BT0i4ns2efY9NPZKsyedv
+        curl -k $COVERALLS_ENDPOINT?repo_token=$COVERALLS_REPO_TOKEN -d "payload[build_num]=$TRAVIS_BUILD_NUMBER&payload[status]=done"
+        coveralls-check $TRAVIS_COMMIT
+
     - stage: release
       if: tag IS present
       python: 3.6
