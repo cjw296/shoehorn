@@ -5,10 +5,12 @@ from shoehorn.compat import PY3
 from shoehorn.targets.enrich import add_traceback
 
 
+exception_with_traceback = S('(?s)^Traceback \(most recent call last\):'
+                             '.+'
+                             'Exception: boom!')
+
 if PY3:
-    expected_traceback = S('(?s)^Traceback \(most recent call last\):'
-                           '.+'
-                           'Exception: boom!')
+    expected_traceback = exception_with_traceback
 else:
     expected_traceback = 'Exception: boom!'
 
@@ -20,16 +22,6 @@ class TestExtractTraceback(object):
             raise Exception('boom!')
         except Exception as e:
             event = add_traceback({'exception': e})
-
-            compare(event, expected={
-                'traceback': expected_traceback
-            })
-
-    def test_from_exc_info(self):
-        try:
-            raise Exception('boom!')
-        except:
-            event = add_traceback({'exc_info': exc_info()})
 
             compare(event, expected={
                 'traceback': expected_traceback
@@ -74,6 +66,16 @@ class TestExtractTraceback(object):
                            '.+'
                            'parts = format_stack\(\)$')
         })
+
+    def test_exc_info_from_sys(self):
+        try:
+            raise Exception('boom!')
+        except:
+            event = add_traceback({'exc_info': exc_info()})
+
+            compare(event, expected={
+                'traceback': exception_with_traceback
+            })
 
     def test_exception_but_no_logging_wanted(self):
         try:
