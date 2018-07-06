@@ -1,8 +1,42 @@
-from testfixtures import StringComparison as S, compare
 from sys import exc_info
 
+import pytest
+from pytz import timezone, UTC
+from testfixtures import StringComparison as S, compare, test_datetime, Replacer
+
 from shoehorn.compat import PY3
-from shoehorn.targets.enrich import add_traceback
+from shoehorn.targets.enrich import add_traceback, AddTimestamp
+
+
+class TestAddTimestamp(object):
+
+    @pytest.fixture(autouse=True)
+    def datetime(self):
+        dt = test_datetime(tzinfo=timezone('US/Eastern'))
+        with Replacer() as r:
+            r.replace('shoehorn.targets.enrich.datetime', dt)
+            r.replace('shoehorn.targets.enrich.AddTimestamp.now', dt.now)
+            yield dt
+
+    def test_simple(self):
+        event = AddTimestamp()({})
+        compare(event, expected={'timestamp': '2001-01-01T00:00:00'})
+
+    def test_key(self):
+        event = AddTimestamp(key='foo')({})
+        compare(event, expected={'foo': '2001-01-01T00:00:00'})
+
+    def test_utc(self):
+        event = AddTimestamp(tz=UTC)({})
+        compare(event, expected={'timestamp': '2001-01-01T05:00:00+00:00'})
+
+    def test_tzinfo(self):
+        event = AddTimestamp(tz=timezone('Australia/Canberra'))({})
+        compare(event, expected={'timestamp': '2001-01-01T16:00:00+11:00'})
+
+    def test_format_string(self):
+        event = AddTimestamp(format='%Y-%m-%d %H:%M')({})
+        compare(event, expected={'timestamp': '2001-01-01 00:00'})
 
 
 exception_with_traceback = S('(?s)^Traceback \(most recent call last\):'
@@ -84,4 +118,3 @@ class TestExtractTraceback(object):
             pass
         event = add_traceback({})
         compare(event, expected={})
-

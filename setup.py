@@ -34,6 +34,7 @@ setup(
             'coveralls',
             'manuel',
             'pytest',
+            'pytz',
             'testfixtures',
             ],
         build=['sphinx', 'pkginfo', 'setuptools-git', 'twine', 'wheel']
