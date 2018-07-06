@@ -2,7 +2,16 @@ import sys
 
 from testfixtures import compare
 
+from shoehorn import logger, get_logger
 from .common import run_in_ascii
+
+
+def test_empty_logging():
+    logger.info('some stuff')
+
+
+def test_empty_get_logger():
+    get_logger().info('some stuff')
 
 
 def test_error_handling(dir):
