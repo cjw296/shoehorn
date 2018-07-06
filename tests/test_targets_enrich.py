@@ -21,7 +21,6 @@ class TestExtractTraceback(object):
             event = add_traceback({'exception': e})
 
             compare(event, expected={
-                'exception': e,
                 'traceback': expected_traceback
             })
 
@@ -35,7 +34,6 @@ class TestExtractTraceback(object):
         except:
             event = add_traceback({'exception': e})
             compare(event, expected={
-                'exception': e,
                 'traceback': expected_traceback
             })
 
@@ -43,7 +41,6 @@ class TestExtractTraceback(object):
         e = Exception('boom!')
         event = add_traceback({'exception': e})
         compare(event, expected={
-            'exception': e,
             'traceback': S('Exception: boom!')
         })
 

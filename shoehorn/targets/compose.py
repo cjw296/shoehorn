@@ -1,14 +1,15 @@
 from collections import deque
+from sys import exc_info
 
 from ..event import Event
 
 MARKER = object()
 
 
-def handle_error(target, exception, event):
+def handle_error(target, exc_info, event):
     if target is not None:
         target(Event((
-            ('exception', exception),
+            ('exc_info', exc_info),
             ('event', repr(event))
         )))
 
@@ -46,8 +47,8 @@ class Stack(object):
                     break
                 elif result is not True:
                     event = result
-        except Exception as exception:
-            handle_error(self.error_target, exception, event)
+        except:
+            handle_error(self.error_target, exc_info(), event)
 
 
 class Layer(object):
@@ -70,6 +71,6 @@ class Layer(object):
             try:
                 target(event)
             except Exception as exception:
-                handle_error(self.error_target, exception, event)
+                handle_error(self.error_target, exc_info(), event)
         if self.propagate:
             return event

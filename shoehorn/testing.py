@@ -35,7 +35,7 @@ class Capture(object):
         return list(self._targets)[:-1]
 
     def error_target(self, event):
-        raise event['exception']
+        raise
 
     def start(self):
         # vars is just a view, so need to take a copy:

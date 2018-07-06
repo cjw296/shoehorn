@@ -1,4 +1,6 @@
-from testfixtures import compare
+from types import TracebackType
+
+from testfixtures import Comparison as C, compare
 
 from shoehorn.event import Event
 from shoehorn.targets.compose import Stack, Layer
@@ -82,7 +84,10 @@ class TestStack(object):
         s = Stack(error_target=t1)
         s.push(handle, t2)
         s('event')
-        compare(t1.events, expected=[Event(exception=e, event="'event'")])
+        compare(t1.events, expected=[Event(
+            exc_info=(Exception, e, C(TracebackType)),
+            event="'event'"
+        )])
         # with a stack, we don't keep going after an error:
         compare(t2.events, expected=[])
 
@@ -200,7 +205,10 @@ class TestLayer(object):
         t2 = TestTarget()
         l = Layer(handle, t2, error_target=t1)
         l('event')
-        compare(t1.events, expected=[Event(exception=e, event="'event'")])
+        compare(t1.events, expected=[Event(
+            exc_info=(Exception, e, C(TracebackType)),
+            event="'event'"
+        )])
         # with a layer, we do keep going after an error:
         compare(t2.events, expected=['event'])
 

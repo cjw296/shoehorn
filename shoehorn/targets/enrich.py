@@ -1,22 +1,35 @@
-from sys import exc_info
 from traceback import format_exception, format_stack
+import sys
 
 from ..compat import PY3
 
 
 def add_traceback(event):
-    exception = event.get('exception')
-    wants_tb = event.pop('exc_info', False)
+    type_ = None
+    value = event.pop('exception', None)
+    tb = None
 
-    if exception is not None or wants_tb:
-        type_, value, tb  = None, None, None
+    exc_info = event.pop('exc_info', False)
+    if isinstance(exc_info, bool):
+        wants_tb = exc_info
+    else:
+        type_, ei_value, tb = exc_info
+        value = ei_value if value is None else value
+        wants_tb = True
 
-        if isinstance(exception, BaseException):
-            type_, value = exception.__class__, exception
+    if value is not None or wants_tb:
+
+        if isinstance(value, BaseException):
+            type_, value = type(value), value
             if PY3:
-                tb = exception.__traceback__
-        elif wants_tb:
-            type_, value, tb = exc_info()
+                tb = value.__traceback__
+
+        if wants_tb and not all((type_, value, tb)):
+            # primarily because python 2's exceptions have not __traceback__
+            ei_type, ei_value, ei_tb = sys.exc_info()
+            type_ = ei_type if type_ is None else type_
+            value = ei_value if value is None else value
+            tb = ei_tb if tb is None else tb
 
         if type_ is None:
             parts = format_stack()
