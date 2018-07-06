@@ -1,11 +1,11 @@
 from sys import exc_info
 
 import pytest
-from pytz import timezone, UTC
-from testfixtures import StringComparison as S, compare, test_datetime, Replacer
+from pytz import timezone
+from testfixtures import StringComparison as S, compare, test_datetime, Replace
 
 from shoehorn.compat import PY3
-from shoehorn.targets.enrich import add_traceback, AddTimestamp
+from shoehorn.targets.enrich import add_traceback, AddTimestamp, UTC
 
 
 class TestAddTimestamp(object):
@@ -13,9 +13,7 @@ class TestAddTimestamp(object):
     @pytest.fixture(autouse=True)
     def datetime(self):
         dt = test_datetime(tzinfo=timezone('US/Eastern'))
-        with Replacer() as r:
-            r.replace('shoehorn.targets.enrich.datetime', dt)
-            r.replace('shoehorn.targets.enrich.AddTimestamp.now', dt.now)
+        with Replace('shoehorn.targets.enrich.datetime', dt):
             yield dt
 
     def test_simple(self):
@@ -27,7 +25,7 @@ class TestAddTimestamp(object):
         compare(event, expected={'foo': '2001-01-01T00:00:00'})
 
     def test_utc(self):
-        event = AddTimestamp(tz=UTC)({})
+        event = AddTimestamp(tz=UTC())({})
         compare(event, expected={'timestamp': '2001-01-01T05:00:00+00:00'})
 
     def test_tzinfo(self):

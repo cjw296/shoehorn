@@ -1,38 +1,40 @@
-from datetime import datetime
+from datetime import datetime, tzinfo, timedelta
 from traceback import format_exception, format_stack
 import sys
 
 from ..compat import PY3
 
-#: A constant specifying that the timestamp should be logged in UTC.
-UTC = 'utc'
+
+#: A simple UTC implementation so that you don't need :mod:`pytz`.
+class UTC(tzinfo):
+    # def tzname(self,**kwargs):
+    #     return "UTC"
+    def utcoffset(self, dt):
+        return timedelta(0)
+    def dst(self, dt):
+        return timedelta(0)
 
 
 class AddTimestamp(object):
 
     tz = None
-    now = datetime.now
 
     def __init__(self, key='timestamp', tz=None, format=None):
         """
         :param key: string specifying the key to add to the event
 
         :param tz:
-          The timezone in which to add the timestamp.
-          Can be a :class:`~datetime.tzinfo` object, the :attr:`UTC`
+          The timezone in which to add the timestamp, specified as a
+          :class:`~datetime.tzinfo` instance.
+          If not specified, the timestamp will be added in the local time with
+          no timezone.
         """
         self.key = key
-        if tz == UTC:
-            self.now = datetime.utcnow
-        else:
-            self.tz = tz
+        self.tz = tz
         self.format = format
 
     def __call__(self, event):
-        if self.tz is None:
-            now = self.now()
-        else:
-            now = self.now(self.tz)
+        now = datetime.now(self.tz)
         if self.format is None:
             timestamp = now.isoformat()
         else:
