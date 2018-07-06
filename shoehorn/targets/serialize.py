@@ -108,7 +108,8 @@ class Human(Serializer):
                 ', '.join(bad_prefix)
             ))
         self.prefix = prefix
-        self.exclude_keys = set(self.prefix_pattern.findall(prefix))
+        self.prefix_keys = set(self.prefix_pattern.findall(prefix))
+        self.exclude_keys = set(self.prefix_keys)
         if ignore:
             self.exclude_keys.update(ignore)
         if only:
@@ -120,7 +121,8 @@ class Human(Serializer):
                           if k in self.only)
         exclude, post = event.extract_newline_values(self.exclude_keys)
         self.write(
-            self.prefix.format(**event),
+            self.prefix.format(**{k: event.get(k, '')
+                                  for k in self.prefix_keys}),
             event.serialize(exclude),
             post,
         )

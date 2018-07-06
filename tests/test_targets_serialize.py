@@ -242,6 +242,23 @@ class TestHuman(object):
         compare(stream.getvalue(),
                 expected="2001-01 1 foo: y='2', b='bar'\n")
 
+    def test_prefix_variables_missing_okay(self):
+        stream = StringIO()
+        target = Human(stream, prefix='{z} {x!r} {a}: ')
+        target(Event((
+            ('y', '2'),
+            ('b', 'bar'),
+        )))
+        compare(stream.getvalue(),
+                expected=" '' : y='2', b='bar'\n")
+
+    def test_prefix_variables_missing_bad(self):
+        stream = StringIO()
+        target = Human(stream, prefix='{z:%Y-%m}: ')
+        with ShouldRaise(ValueError):
+            target(Event())
+        compare(stream.getvalue(), expected='')
+
     def test_ignore(self):
         stream = StringIO()
         target = Human(stream, ignore={'z'})
