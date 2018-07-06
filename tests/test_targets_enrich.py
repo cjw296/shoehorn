@@ -1,4 +1,5 @@
 from testfixtures import StringComparison as S, compare
+from sys import exc_info
 
 from shoehorn.compat import PY3
 from shoehorn.targets.enrich import add_traceback
