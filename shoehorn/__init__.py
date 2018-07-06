@@ -1,9 +1,14 @@
-from shoehorn.stdlib import StandardLibraryTarget
+from .targets.serialize import Human, STDERR
+from .stdlib import StandardLibraryTarget
 from .logger import Logger
 from .targets.compose import Stack
+from .targets.enrich import add_traceback
 
 #: The :class:`~shoehorn.targets.Stack` to handle errors.
-errors = Stack()
+errors = Stack(
+    add_traceback,
+    Human(STDERR)
+)
 
 #: The :class:`~shoehorn.targets.Stack` to handle logging.
 logging = Stack(error_target=errors)
