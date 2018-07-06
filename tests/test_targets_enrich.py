@@ -24,6 +24,16 @@ class TestExtractTraceback(object):
                 'traceback': expected_traceback
             })
 
+    def test_from_exc_info(self):
+        try:
+            raise Exception('boom!')
+        except:
+            event = add_traceback({'exc_info': exc_info()})
+
+            compare(event, expected={
+                'traceback': expected_traceback
+            })
+
     def test_explicit_exception(self):
         try:
             raise Exception('boom!')
