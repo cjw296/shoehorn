@@ -3,14 +3,12 @@ language: python
 # for container-y goodness:
 sudo: false
 
-env:
-  secure: "JPYg9pI+nx+1ffPR8Rowr9nuvIGVo6t5Sk1SQUOy1ZXWn53nhlLa3QCNqgZCUVuHLmF3o+N/9D7gUworZ8nWL/HvDZaELfKd76VQ4Pes11FkpwOp7Ve+6v7LSfuf/V0DMxIDUF2GwJ47ppTsEWGBXfVgTnLrla5t7c8f+iKeDYrNhS4SW9XUsSJeRflwnq6FZbqt7DCkGiF1xGdWiHK0MyWyyo1KFSGKx4/zrlxfZGXk8mp9vPCi0ocaS2Yqj216UntM/ePdtc6tbQFvKWf0V3Qp59GZl5hd9wPf2qUCIRZStrDiN1kRImNPLRxgmSF0LZ2Zg/ZDKjOHrndunhFGpvFqQyavXhC2cYUCZwZ8HAjBo/91W7xg3cnGtcWfGUG4xLq9DcroqNm8aRQoIXlvjyEfERa5Xbgb3SxTlRCGGli+AvBU1aGqCLtQT+v0juZJU0vpf0kDrORAwL1r/nSZ8nEuEAu+4P8cxS4aQDss4bEuMWjFvcyawmjf387/NxIbecW3SMEVdjgDchxCKLivDXMaq9xzs9/NmXSKXjL14J15wz4LQ59F2lFzlapvLVaf0nxe3AyY+LrXzkMwCXpDUHpkPhoynMptvNEiDtG74MuS3Zu6iB2JPscNttwPqPlNCK55peu/WRHAa7qsE9XQ+LVMRSFIgMXwrTSeaBGbFE0="
-
 python:
   - "2.7"
   - "3.6"
 
 env:
+  - secure: "JPYg9pI+nx+1ffPR8Rowr9nuvIGVo6t5Sk1SQUOy1ZXWn53nhlLa3QCNqgZCUVuHLmF3o+N/9D7gUworZ8nWL/HvDZaELfKd76VQ4Pes11FkpwOp7Ve+6v7LSfuf/V0DMxIDUF2GwJ47ppTsEWGBXfVgTnLrla5t7c8f+iKeDYrNhS4SW9XUsSJeRflwnq6FZbqt7DCkGiF1xGdWiHK0MyWyyo1KFSGKx4/zrlxfZGXk8mp9vPCi0ocaS2Yqj216UntM/ePdtc6tbQFvKWf0V3Qp59GZl5hd9wPf2qUCIRZStrDiN1kRImNPLRxgmSF0LZ2Zg/ZDKjOHrndunhFGpvFqQyavXhC2cYUCZwZ8HAjBo/91W7xg3cnGtcWfGUG4xLq9DcroqNm8aRQoIXlvjyEfERa5Xbgb3SxTlRCGGli+AvBU1aGqCLtQT+v0juZJU0vpf0kDrORAwL1r/nSZ8nEuEAu+4P8cxS4aQDss4bEuMWjFvcyawmjf387/NxIbecW3SMEVdjgDchxCKLivDXMaq9xzs9/NmXSKXjL14J15wz4LQ59F2lFzlapvLVaf0nxe3AyY+LrXzkMwCXpDUHpkPhoynMptvNEiDtG74MuS3Zu6iB2JPscNttwPqPlNCK55peu/WRHAa7qsE9XQ+LVMRSFIgMXwrTSeaBGbFE0="
   - JSON=stdlib
   - JSON=rapidjson
 
@@ -39,7 +37,7 @@ jobs:
       after_success: skip
 
       install: "pip install -U coveralls-check"
-      script: "echo coveralls-check $TRAVIS_COMMIT --parallel-build-number $TRAVIS_BUILD_NUMBER --repo-token $COVERALLS_REPO_TOKEN"
+      script: "coveralls-check $TRAVIS_COMMIT --parallel-build-number $TRAVIS_BUILD_NUMBER --repo-token $COVERALLS_REPO_TOKEN"
 
     - stage: release
       if: tag IS present
