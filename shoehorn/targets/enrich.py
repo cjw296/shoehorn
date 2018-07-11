@@ -15,7 +15,7 @@ class UTC(tzinfo):
         return timedelta(0)
 
 
-class AddTimestamp(object):
+class Timestamp(object):
 
     tz = None
 
@@ -43,7 +43,7 @@ class AddTimestamp(object):
         return event
 
 
-def add_traceback(event):
+def traceback(event):
     type_ = None
     value = event.pop('exception', None)
     tb = None

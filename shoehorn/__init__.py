@@ -2,11 +2,11 @@ from .targets.serialize import Human, STDERR
 from .stdlib import StandardLibraryTarget
 from .logger import Logger
 from .targets.compose import Stack
-from .targets.enrich import add_traceback
+from .targets.enrich import traceback
 
 #: The :class:`~shoehorn.targets.Stack` to handle errors.
 errors = Stack(
-    add_traceback,
+    traceback,
     Human(STDERR)
 )
 

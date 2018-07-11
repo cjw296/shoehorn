@@ -5,7 +5,7 @@ from pytz import timezone
 from testfixtures import StringComparison as S, compare, test_datetime, Replace
 
 from shoehorn.compat import PY3
-from shoehorn.targets.enrich import add_traceback, AddTimestamp, UTC
+from shoehorn.targets.enrich import traceback, Timestamp, UTC
 
 
 class TestAddTimestamp(object):
@@ -17,23 +17,23 @@ class TestAddTimestamp(object):
             yield dt
 
     def test_simple(self):
-        event = AddTimestamp()({})
+        event = Timestamp()({})
         compare(event, expected={'timestamp': '2001-01-01T00:00:00'})
 
     def test_key(self):
-        event = AddTimestamp(key='foo')({})
+        event = Timestamp(key='foo')({})
         compare(event, expected={'foo': '2001-01-01T00:00:00'})
 
     def test_utc(self):
-        event = AddTimestamp(tz=UTC())({})
+        event = Timestamp(tz=UTC())({})
         compare(event, expected={'timestamp': '2001-01-01T05:00:00+00:00'})
 
     def test_tzinfo(self):
-        event = AddTimestamp(tz=timezone('Australia/Canberra'))({})
+        event = Timestamp(tz=timezone('Australia/Canberra'))({})
         compare(event, expected={'timestamp': '2001-01-01T16:00:00+11:00'})
 
     def test_format_string(self):
-        event = AddTimestamp(format='%Y-%m-%d %H:%M')({})
+        event = Timestamp(format='%Y-%m-%d %H:%M')({})
         compare(event, expected={'timestamp': '2001-01-01 00:00'})
 
 
@@ -53,7 +53,7 @@ class TestExtractTraceback(object):
         try:
             raise Exception('boom!')
         except Exception as e:
-            event = add_traceback({'exception': e})
+            event = traceback({'exception': e})
 
             compare(event, expected={
                 'traceback': expected_traceback
@@ -67,14 +67,14 @@ class TestExtractTraceback(object):
         try:
             raise Exception('wut?')
         except:
-            event = add_traceback({'exception': e})
+            event = traceback({'exception': e})
             compare(event, expected={
                 'traceback': expected_traceback
             })
 
     def test_explicit_exception_no_traceback(self):
         e = Exception('boom!')
-        event = add_traceback({'exception': e})
+        event = traceback({'exception': e})
         compare(event, expected={
             'traceback': S('Exception: boom!')
         })
@@ -83,7 +83,7 @@ class TestExtractTraceback(object):
         try:
             raise Exception('boom!')
         except Exception:
-            event = add_traceback({'exc_info': True})
+            event = traceback({'exc_info': True})
 
             compare(event, expected={
                 'traceback': S('(?s)^Traceback \(most recent call last\):'
@@ -92,7 +92,7 @@ class TestExtractTraceback(object):
             })
 
     def test_exc_info_true_no_exception(self):
-        event = add_traceback({'exc_info': True})
+        event = traceback({'exc_info': True})
         compare(event, expected={
             'traceback': S('(?s)^ *File'
                            '.+'
@@ -103,7 +103,7 @@ class TestExtractTraceback(object):
         try:
             raise Exception('boom!')
         except:
-            event = add_traceback({'exc_info': exc_info()})
+            event = traceback({'exc_info': exc_info()})
 
             compare(event, expected={
                 'traceback': exception_with_traceback
@@ -114,5 +114,5 @@ class TestExtractTraceback(object):
             raise Exception('boom!')
         except Exception as e:
             pass
-        event = add_traceback({})
+        event = traceback({})
         compare(event, expected={})
