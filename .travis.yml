@@ -3,6 +3,9 @@ language: python
 # for container-y goodness:
 sudo: false
 
+env:
+  secure: "b1JQGltto/2/Rj4Apd1JeHiOU3SL50uxUjt+5Qpc3GN4CeXzCL4QWm/MeochCevORN3q7mhtFqI9QCE1wJ3ewig3wt5UiLObd3ehKyxOycd/WHQf1Xd42ZfNmoscvmkUv9M743WpEGWBy2ZcjFpN+UuNsVy4J5YflYNZM2t1kWSrQgPFlABx37iLPJd+7n2+PUSefQ7bmEFdsdvgRbIBpoXkAeL1DzP4qcA4vw5Zp+RSRB/H93OMbu0bQpVGzX1HvExvfuWQFZI/cdNw2bjMNHaILxGviXR4ViAkJHjd1lbLMCIijjvApE3+v3ZOTOA9389I2xA8PzcgT0KJhJsf6yzNQvZG+RqnQejosexBBw227MOWtvbu4lANpDf5SoMtNRSbShNPECx7cjv9BjS5xLnZ14ABbOsZexx1J6nxMLLOtuH98CRv+f5D1AW41MmlT/6NzxGxwWwk7i0Pzj/ZIrLUEfd+40k86LJjtththm10EiE6xEQJOt4vmYjjnfasxiVi2UZ9s18h0e3BL4KIdcEms6YXzUOKSdGSlXx22+WV8tTpkMX9e9VCQ+Tzy8o5yn81FxbVN5G08eidftlJK20BU7LxeE1PRi3rNDeWf50Q9b+a8USW6hlb4O7CkOiU3OSgMhAVxqR91fen0XxTTzsjvva5EesoVWFyHKVDpXI="
+
 python:
   - "2.7"
   - "3.6"
@@ -36,11 +39,7 @@ jobs:
       after_success: skip
 
       install: "pip install -U coveralls-check"
-      script: |
-        export COVERALLS_ENDPOINT=https://coveralls.io/webhook
-        export COVERALLS_REPO_TOKEN=fv7fP6yIYGu3BT0i4ns2efY9NPZKsyedv
-        curl -k $COVERALLS_ENDPOINT?repo_token=$COVERALLS_REPO_TOKEN -d "payload[build_num]=$TRAVIS_BUILD_NUMBER&payload[status]=done"
-        coveralls-check $TRAVIS_COMMIT
+      script: "coveralls-check $TRAVIS_COMMIT --parallel-build-number $TRAVIS_BUILD_NUMBER --repo-token $COVERALLS_REPO_TOKEN"
 
     - stage: release
       if: tag IS present
