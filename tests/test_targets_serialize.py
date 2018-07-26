@@ -195,7 +195,7 @@ class TestLTSV(object):
             LTSV(StringIO(), **{sep: 'xx'})
 
     @pytest.mark.parametrize("sep", ['label_sep', 'item_sep'])
-    def test_separator_too_long(self, sep):
+    def test_separator_space(self, sep):
         with ShouldRaise(AssertionError(
             "space cannot be used as a separator"
         )):
