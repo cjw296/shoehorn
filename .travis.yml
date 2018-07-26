@@ -25,7 +25,7 @@ install:
   - sh -c "if [ $JSON = 'rapidjson' ]; then pip install 'python-rapidjson'; fi"
 
 # command to run tests, e.g. python setup.py test
-script: coverage run --source shoehorn -m pytest
+script: coverage run --source shoehorn,tests -m pytest
 
 after_success:
   - "COVERALLS_PARALLEL=true coveralls"
